@@ -1,0 +1,793 @@
+\documentclass[12pt,a4paper]{article}
+
+% Pacotes essenciais
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{float}
+
+% Geometria da página
+\geometry{
+  top=2.5cm, bottom=2.5cm,
+  left=3cm, right=2.5cm
+}
+
+% Cores do projeto
+\definecolor{myblue}{RGB}{30, 90, 160}
+\definecolor{mygreen}{RGB}{0, 128, 80}
+\definecolor{mygray}{RGB}{245, 245, 245}
+\definecolor{myorange}{RGB}{210, 100, 10}
+\definecolor{myred}{RGB}{180, 30, 30}
+\definecolor{codegray}{RGB}{240, 240, 240}
+\definecolor{codecomment}{RGB}{100, 130, 100}
+\definecolor{codestring}{RGB}{160, 40, 40}
+\definecolor{codekeyword}{RGB}{30, 80, 160}
+
+% Cabeçalho e rodapé
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textcolor{myblue}{\small \textbf{My Chance} — Documentação Técnica}}
+\fancyhead[R]{\textcolor{gray}{\small Algoritmos de Matching}}
+\fancyfoot[C]{\textcolor{gray}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Estilo de títulos
+\titleformat{\section}
+  {\Large\bfseries\color{myblue}}
+  {\thesection.}{0.8em}{}[\color{myblue}\titlerule]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{myblue!80!black}}
+  {\thesubsection.}{0.6em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{myblue!60!black}}
+  {\thesubsubsection.}{0.5em}{}
+
+% Caixas coloridas
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{infobox}[1][]{
+  enhanced, breakable,
+  colback=myblue!5!white,
+  colframe=myblue,
+  fonttitle=\bfseries,
+  title={#1},
+  boxrule=0.8pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{formulabox}[1][]{
+  enhanced,
+  colback=mygreen!5!white,
+  colframe=mygreen,
+  fonttitle=\bfseries,
+  title={#1},
+  boxrule=0.8pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{examplebox}[1][]{
+  enhanced, breakable,
+  colback=myorange!5!white,
+  colframe=myorange,
+  fonttitle=\bfseries,
+  title={#1},
+  boxrule=0.8pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{warnbox}[1][]{
+  enhanced,
+  colback=myred!5!white,
+  colframe=myred,
+  fonttitle=\bfseries,
+  title={#1},
+  boxrule=0.8pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+% Estilo de código
+\lstdefinestyle{pythonstyle}{
+  backgroundcolor=\color{codegray},
+  commentstyle=\color{codecomment}\itshape,
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  basicstyle=\ttfamily\small,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=6pt,
+  numberstyle=\tiny\color{gray},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=4,
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{gray!40},
+  language=Python
+}
+
+\lstset{style=pythonstyle}
+
+% Hiperlinks
+\hypersetup{
+  colorlinks=true,
+  linkcolor=myblue,
+  urlcolor=myblue,
+  citecolor=myblue
+}
+
+% --------------------------------------------------
+\begin{document}
+
+% Capa
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{myblue} My Chance\par}
+  \vspace{0.3cm}
+  {\large\itshape Onde seu perfil profissional é o mais importante\par}
+  \vspace{1.5cm}
+  \rule{\linewidth}{1.5pt}
+  \vspace{0.3cm}
+  {\LARGE\bfseries Documentação Técnica\par}
+  \vspace{0.2cm}
+  {\Large\color{myblue!70!black} Módulo de Algoritmos de Matching\par}
+  \vspace{0.2cm}
+  \rule{\linewidth}{1.5pt}
+  \vspace{1.2cm}
+  {\large \textbf{Item 4 — Arquitetura e Principais Tecnologias}\par}
+  \vspace{1cm}
+  \begin{tcolorbox}[colback=myblue!8, colframe=myblue, width=0.85\linewidth]
+    \centering
+    \textbf{Algoritmos documentados neste arquivo:}\\[6pt]
+    1. Pontuação Ponderada por Competências\\
+    2. Similaridade por Cosseno (Cosine Similarity)
+  \end{tcolorbox}
+  \vspace{1.5cm}
+  {\large Equipe My Chance — Disciplina de MVP\par}
+  \vspace{0.4cm}
+  {\normalsize Davi Lima de Medeiros \quad Israel Buriti Galvão\par}
+  {\normalsize João Victor Cosme Melo \quad José do Bomfim Truta Neto\par}
+  {\normalsize Lucas Leonardo Mayer Almeida \quad Lucas Queiroz Correia\par}
+  \vfill
+  {\normalsize Campina Grande, Paraíba — 2026\par}
+\end{titlepage}
+
+% Sumário
+\tableofcontents
+\newpage
+
+% --------------------------------------------------
+\section{Introdução e Contexto}
+
+O \textbf{My Chance} é uma plataforma de recrutamento às cegas e invertido, cujo objetivo central é
+reduzir a influência de vieses inconscientes na triagem de candidatos. Em vez de candidatos
+se candidatarem a vagas, \emph{recrutadores} buscam ativamente perfis no banco de dados,
+enxergando apenas competências técnicas e experiências — os dados pessoais são revelados
+somente após o aceite mútuo de uma entrevista.
+
+Para que esse mecanismo funcione com qualidade e justiça, o sistema precisa de um
+\textbf{motor de matching inteligente}: um conjunto de algoritmos que ordene candidatos por
+compatibilidade com uma vaga de forma precisa, transparente e escalável.
+
+Este documento descreve, de forma didática e detalhada, os dois algoritmos propostos para
+compor esse motor, incluindo fundamentos matemáticos, implementação em Python e
+orientações de integração com o restante da arquitetura (Streamlit, SQLite/PostgreSQL,
+Docker).
+
+\begin{infobox}[Arquitetura em Camadas]
+A sugestão estratégica para o MVP é combinar os dois algoritmos em sequência:
+\begin{enumerate}
+  \item \textbf{Pontuação Ponderada} — filtragem rápida e eliminação de candidatos com lacunas críticas.
+  \item \textbf{Cosine Similarity} — ranking principal de compatibilidade.
+\end{enumerate}
+\end{infobox}
+
+\newpage
+
+% --------------------------------------------------
+\section{Algoritmo 1 — Pontuação Ponderada por Competências}
+
+\subsection{Fundamentos Teóricos}
+
+A \textbf{Pontuação Ponderada por Competências} (\textit{Weighted Skill Scoring}) é um método de ranqueamento baseado em somas ponderadas. É um algoritmo mais simples, mas também o mais transparente e explicável, características essenciais para um MVP que precisará convencer recrutadores.
+
+\begin{infobox}[Intuição]
+Pense como um recrutador humano preenchendo uma planilha: para cada competência
+exigida pela vaga, ele atribui uma importância (peso) e avalia o nível do candidato.
+A nota final é a soma dessas avaliações. Simples, auditável, justo.
+\end{infobox}
+
+\subsection{Fórmula Matemática}
+
+Dado um candidato $C$ e uma vaga $V$ com $n$ competências, o score é:
+
+\begin{formulabox}[Fórmula da Pontuação Ponderada]
+\begin{equation}
+  \text{Score}(C, V) = \sum_{i=1}^{n} w_i \cdot l_i
+  \label{eq:wss}
+\end{equation}
+onde:
+\begin{itemize}
+  \item $w_i \in \mathbb{R}^+$ — peso da competência $i$ definido pela vaga;
+  \item $l_i \in [0, L_{\max}]$ — nível declarado do candidato na competência $i$;
+  \item $L_{\max}$ — nível máximo possível (e.g., 5 em uma escala de 1–5).
+\end{itemize}
+\end{formulabox}
+
+\vspace{0.4cm}
+
+Para normalizar o score entre 0 e 1, podemos dividir pelo score máximo teórico:
+
+\begin{formulabox}[Score Normalizado]
+\begin{equation}
+  \text{Score}_{\text{norm}}(C, V) = \frac{\sum_{i=1}^{n} w_i \cdot l_i}{\sum_{i=1}^{n} w_i \cdot L_{\max}}
+  \label{eq:wss_norm}
+\end{equation}
+\end{formulabox}
+
+\subsection{Extensões para o My Chance}
+
+Além da fórmula base, o sistema pode incorporar bônus e penalizações:
+
+\begin{formulabox}[Fórmula Estendida]
+\begin{equation}
+  \text{Score}_{\text{ext}}(C, V) = \underbrace{\sum_{i=1}^{n} w_i \cdot l_i}_{\text{base}}
+  + \underbrace{\beta_p \cdot N_p}_{\text{bônus projetos}}
+  + \underbrace{\beta_r \cdot R_r}_{\text{bônus recência}}
+  - \underbrace{\gamma_m \cdot M_o}_{\text{penalização obrig.}}
+  \label{eq:wss_ext}
+\end{equation}
+onde:
+\begin{itemize}
+  \item $N_p$ — número de projetos reais relacionados; $\beta_p$ — bônus unitário por projeto;
+  \item $R_r$ — fator de recência da experiência ($\in [0,1]$, decai com o tempo);
+  \item $M_o$ — número de competências obrigatórias ausentes; $\gamma_m$ — penalização por ausência.
+\end{itemize}
+\end{formulabox}
+
+\subsection{Exemplo Numérico Detalhado}
+
+\begin{examplebox}[Exemplo — Vaga de Analista de Dados]
+\textbf{Requisitos da vaga:}
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  Competência & Peso $(w_i)$ & Obrigatória? \\
+  \midrule
+  Python     & 5 & Sim \\
+  SQL        & 4 & Sim \\
+  Docker     & 3 & Não \\
+  Power BI   & 2 & Não \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\textbf{Perfil do candidato A} (nível em escala 0–5):
+Python = 4, SQL = 5, Docker = 2, Power BI = 0, projetos = 2
+
+\textbf{Cálculo:}
+\begin{align*}
+  \text{Score}_{\text{base}} &= (5 \cdot 4) + (4 \cdot 5) + (3 \cdot 2) + (2 \cdot 0) = 46 \\
+  \text{Score}_{\text{máx}}  &= (5 + 4 + 3 + 2) \cdot 5 = 70 \\
+  \text{Score}_{\text{norm}} &= \frac{46}{70} \approx 0{,}657 \\
+  \text{Bônus projetos}      &= 2 \cdot 2{,}0 = +4{,}0 \\
+  \text{Score}_{\text{final}} &\approx 0{,}657 + 0{,}057 \approx 0{,}714
+\end{align*}
+\end{examplebox}
+
+\subsection{Implementação em Python}
+
+\begin{lstlisting}[caption={Pontuação ponderada com bônus e penalizações},
+                   label={lst:wss}]
+from dataclasses import dataclass, field
+from typing import Optional
+
+
+@dataclass
+class Vaga:
+    id: int
+    titulo: str
+    # Ex: {"python": {"peso": 5, "obrigatoria": True, "nivel_min": 3}}
+    competencias: dict
+
+
+@dataclass
+class Candidato:
+    id: int
+    nome_anonimo: str          # ID anonimo no My Chance
+    # Ex: {"python": 4, "sql": 5, "docker": 2}
+    competencias: dict
+    projetos: int = 0          # Projetos reais no portfolio
+    anos_experiencia: float = 0.0
+
+
+def calcular_fator_recencia(anos: float) -> float:
+    """
+    Decaimento exponencial: experiencias recentes valem mais.
+    Anos 0-1 -> fator ~1.0
+    Anos 5   -> fator ~0.6
+    Anos 10+ -> fator ~0.37
+    """
+    import math
+    return math.exp(-0.1 * anos)
+
+
+def calcular_score_ponderado(
+    candidato: Candidato,
+    vaga: Vaga,
+    nivel_maximo: int = 5,
+    bonus_por_projeto: float = 2.0,
+    penalizacao_obrigatoria: float = 15.0,
+) -> dict:
+    """
+    Calcula o score ponderado de um candidato para uma vaga.
+
+    Retorna um dict com score bruto, normalizado e detalhes.
+    """
+    score_base = 0.0
+    score_maximo = 0.0
+    ausencias_obrigatorias = 0
+    detalhes = {}
+
+    for competencia, config in vaga.competencias.items():
+        peso = config["peso"]
+        obrigatoria = config.get("obrigatoria", False)
+        nivel_candidato = candidato.competencias.get(competencia, 0)
+
+        contribuicao = peso * nivel_candidato
+        score_base += contribuicao
+        score_maximo += peso * nivel_maximo
+
+        detalhes[competencia] = {
+            "peso": peso,
+            "nivel_candidato": nivel_candidato,
+            "contribuicao": contribuicao,
+        }
+
+        # Verifica ausencia de competencia obrigatoria
+        nivel_minimo = config.get("nivel_min", 1)
+        if obrigatoria and nivel_candidato < nivel_minimo:
+            ausencias_obrigatorias += 1
+
+    # Score normalizado [0, 1]
+    score_normalizado = score_base / score_maximo if score_maximo > 0 else 0.0
+
+    # Bonus por projetos
+    bonus_projetos = (candidato.projetos * bonus_por_projeto) / score_maximo
+
+    # Fator de recencia
+    fator_recencia = calcular_fator_recencia(candidato.anos_experiencia)
+
+    # Penalizacao por competencias obrigatorias ausentes
+    penalizacao = (ausencias_obrigatorias * penalizacao_obrigatoria) / score_maximo
+
+    # Score final
+    score_final = max(
+        0.0,
+        (score_normalizado + bonus_projetos) * fator_recencia - penalizacao
+    )
+
+    return {
+        "candidato_id": candidato.id,
+        "score_base_normalizado": round(score_normalizado, 4),
+        "score_final": round(score_final, 4),
+        "ausencias_obrigatorias": ausencias_obrigatorias,
+        "detalhes_por_competencia": detalhes,
+    }
+
+
+def rankear_candidatos(candidatos: list[Candidato],
+                        vaga: Vaga) -> list[dict]:
+    """Ordena candidatos por score decrescente."""
+    resultados = [
+        calcular_score_ponderado(c, vaga) for c in candidatos
+    ]
+    return sorted(resultados, key=lambda x: x["score_final"],
+                  reverse=True)
+
+
+# ------------------------------------------------------------------
+# Exemplo de uso
+# ------------------------------------------------------------------
+if __name__ == "__main__":
+    vaga_analista = Vaga(
+        id=1,
+        titulo="Analista de Dados",
+        competencias={
+            "python": {"peso": 5, "obrigatoria": True,  "nivel_min": 3},
+            "sql":    {"peso": 4, "obrigatoria": True,  "nivel_min": 2},
+            "docker": {"peso": 3, "obrigatoria": False, "nivel_min": 1},
+            "powerbi":{"peso": 2, "obrigatoria": False, "nivel_min": 1},
+        }
+    )
+
+    candidatos = [
+        Candidato(1, "CAND-001",
+                  {"python": 4, "sql": 5, "docker": 2, "powerbi": 0},
+                  projetos=2, anos_experiencia=1.0),
+        Candidato(2, "CAND-002",
+                  {"python": 5, "sql": 4, "docker": 4, "powerbi": 3},
+                  projetos=5, anos_experiencia=3.0),
+        Candidato(3, "CAND-003",
+                  {"python": 2, "sql": 1, "docker": 0, "powerbi": 5},
+                  projetos=0, anos_experiencia=0.5),
+    ]
+
+    ranking = rankear_candidatos(candidatos, vaga_analista)
+    for pos, r in enumerate(ranking, 1):
+        print(f"{pos}. {r['candidato_id']} "
+              f"| Score: {r['score_final']:.3f} "
+              f"| Ausencias obrig.: {r['ausencias_obrigatorias']}")
+\end{lstlisting}
+
+\subsection{Vantagens e Limitações}
+
+\begin{table}[H]
+\centering
+\caption{Análise da Pontuação Ponderada no projeto}
+\begin{tabular}{|p{7cm}|| p{7cm}|}
+  \toprule
+  \textbf{Vantagens} & \textbf{Limitações} \\
+  \hline
+  Extremamente simples de implementar & Pesos iniciais são subjetivos (recrutador define) \\
+  \hline
+  Completamente transparente e auditável & Não captura similaridade estrutural entre perfis \\
+  \hline
+  Fácil de explicar em apresentação & Escalas declaradas pelo candidato podem ser inconsistentes \\
+  \hline
+  Permite penalização por gaps críticos & Não detecta combinações sinérgicas de competências \\
+  \hline
+  Funciona mesmo sem histórico de dados & Ranking linear pode ser simplista para vagas complexas \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% --------------------------------------------------
+\section{Algoritmo 2 — Matching por Similaridade Vetorial (Cosine Similarity)}
+
+\subsection{Fundamentos Teóricos}
+
+A \textbf{Similaridade por Cosseno} (\textit{Cosine Similarity}) é uma medida de similaridade
+entre dois vetores no espaço euclidiano. É amplamente utilizada em sistemas de
+recomendação, recuperação de informação e processamento de linguagem natural por
+uma razão elegante: ela captura a \emph{direção} dos vetores, não apenas suas magnitudes.
+
+\begin{infobox}[Intuição Geométrica]
+Imagine cada competência como uma dimensão em um espaço vetorial. Tanto o candidato
+quanto a vaga são representados como pontos nesse espaço. A \textit{Cosine Similarity} mede o
+\textbf{ângulo} entre esses dois pontos — quanto menor o ângulo, mais similares os perfis.
+Isso significa que um candidato com todas as competências no nível 4 pode ser tão
+compatível com uma vaga quanto um com todas no nível 2, se a \emph{proporção} for similar.
+\end{infobox}
+
+\subsection{Fórmula Matemática}
+
+Dados dois vetores $\mathbf{A}$ (vaga) e $\mathbf{B}$ (candidato) no $\mathbb{R}^n$:
+
+\begin{formulabox}[Similaridade por Cosseno]
+\begin{equation}
+  \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \cdot \|\mathbf{B}\|}
+  = \frac{\sum_{i=1}^{n} A_i B_i}{\sqrt{\sum_{i=1}^{n} A_i^2} \cdot \sqrt{\sum_{i=1}^{n} B_i^2}}
+  \label{eq:cosine}
+\end{equation}
+onde $\theta$ é o ângulo entre os vetores e o resultado pertence ao intervalo $[-1, 1]$.
+\end{formulabox}
+
+\vspace{0.4cm}
+
+Para o caso de competências (valores não negativos), o resultado estará sempre em $[0, 1]$:
+
+\begin{table}[H]
+\centering
+\caption{Interpretação da Cosine Similarity}
+\begin{tabular}{c|c|c}
+  \toprule
+  $\cos(\theta)$ & $\theta$ & Interpretação \\
+  \midrule
+  $1{,}00$            & $0°$   & Perfis idênticos \\
+  $0{,}85 - 0{,}99$  & $< 30°$ & Alta compatibilidade \\
+  $0{,}60 - 0{,}84$  & $30°-53°$ & Compatibilidade moderada \\
+  $0{,}30 - 0{,}59$  & $> 53°$ & Baixa compatibilidade \\
+  $0{,}00$            & $90°$  & Sem competências em comum \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Construção dos Vetores no My Chance}
+
+O passo mais importante é a \textbf{vetorização}: converter perfis textuais em vetores numéricos.
+
+\subsubsection{Vocabulário de Competências}
+
+Define-se um vocabulário global $\mathcal{V} = \{c_1, c_2, \ldots, c_m\}$ com todas as
+competências cadastradas no sistema. Cada perfil vira um vetor $\mathbf{v} \in \mathbb{R}^m$,
+onde $v_i$ representa o nível naquela competência (ou 0 se ausente).
+
+\subsubsection{Exemplo de Vetorização}
+
+Considere $\mathcal{V} = \{\text{Python}, \text{SQL}, \text{Docker}, \text{React}\}$:
+
+\begin{examplebox}[Vetorização e Cálculo de Similaridade]
+\textbf{Vaga:} Python=1, SQL=1, Docker=1, React=0 $\Rightarrow \mathbf{V} = (1, 1, 1, 0)$\\
+\textbf{Candidato A:} Python=1, SQL=1, Docker=0, React=1 $\Rightarrow \mathbf{C_A} = (1, 1, 0, 1)$\\
+\textbf{Candidato B:} Python=5, SQL=4, Docker=4, React=0 $\Rightarrow \mathbf{C_B} = (5, 4, 4, 0)$\\[8pt]
+
+\textbf{Cálculo para Candidato A:}
+\[
+  \cos(\theta_A) = \frac{(1)(1)+(1)(1)+(1)(0)+(0)(1)}{\sqrt{3}\cdot\sqrt{3}} = \frac{2}{3} \approx 0{,}667
+\]
+
+\textbf{Cálculo para Candidato B:}
+\[
+  \cos(\theta_B) = \frac{(1)(5)+(1)(4)+(1)(4)+(0)(0)}{\sqrt{3}\cdot\sqrt{57}} = \frac{13}{\sqrt{171}} \approx 0{,}994
+\]
+
+Candidato B é mais compatível, mesmo usando escala 0–5 vs 0–1.
+\end{examplebox}
+
+\subsection{Versão Ponderada da Cosine Similarity}
+
+É possível incorporar os pesos da vaga diretamente na similaridade:
+
+\begin{formulabox}[Cosine Similarity Ponderada]
+\begin{equation}
+  \cos_w(\theta) = \frac{\sum_{i=1}^{n} w_i \cdot A_i \cdot B_i}
+  {\sqrt{\sum_{i=1}^{n} w_i \cdot A_i^2} \cdot \sqrt{\sum_{i=1}^{n} w_i \cdot B_i^2}}
+  \label{eq:cosine_w}
+\end{equation}
+\end{formulabox}
+
+Isso combina a expressividade geométrica da Cosine Similarity com os pesos de importância
+definidos pela vaga.
+
+\subsection{Implementação em Python}
+
+\begin{lstlisting}[caption={Cosine Similarity para matching de vagas e candidatos},
+                   label={lst:cosine}]
+import numpy as np
+import pandas as pd
+from typing import Optional
+
+
+def vetorizar_perfil(competencias_perfil: dict,
+                     vocabulario: list[str]) -> np.ndarray:
+    """
+    Converte um dicionario de competencias em vetor numpy.
+
+    Parametros
+    ----------
+    competencias_perfil : {"python": 4, "sql": 3, ...}
+    vocabulario         : lista ordenada de todas as competencias
+
+    Retorna
+    -------
+    np.ndarray de tamanho len(vocabulario)
+    """
+    return np.array([
+        float(competencias_perfil.get(c, 0)) for c in vocabulario
+    ])
+
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray,
+                      pesos: Optional[np.ndarray] = None) -> float:
+    """
+    Calcula a similaridade por cosseno entre dois vetores.
+    Suporta versao ponderada se 'pesos' for fornecido.
+    """
+    if pesos is not None:
+        # Versao ponderada
+        num = np.sum(pesos * a * b)
+        den = (np.sqrt(np.sum(pesos * a**2)) *
+               np.sqrt(np.sum(pesos * b**2)))
+    else:
+        num = np.dot(a, b)
+        den = np.linalg.norm(a) * np.linalg.norm(b)
+
+    if den == 0:
+        return 0.0
+    return float(num / den)
+
+
+def construir_matriz_scores(candidatos: list[dict],
+                             vaga: dict,
+                             vocabulario: list[str]) -> pd.DataFrame:
+    """
+    Monta o ranking completo de candidatos para uma vaga.
+
+    Parametros
+    ----------
+    candidatos  : lista de dicts com 'id', 'competencias'
+    vaga        : dict com 'id', 'competencias', 'pesos'
+    vocabulario : lista de todas as competencias do sistema
+
+    Retorna
+    -------
+    DataFrame ordenado por similaridade decrescente
+    """
+    vetor_vaga = vetorizar_perfil(
+        vaga["competencias"], vocabulario
+    )
+    vetor_pesos = vetorizar_perfil(
+        vaga.get("pesos", {}), vocabulario
+    )
+    # Se nao houver pesos, usa vetor uniforme
+    if vetor_pesos.sum() == 0:
+        vetor_pesos = None
+
+    resultados = []
+    for c in candidatos:
+        vetor_candidato = vetorizar_perfil(
+            c["competencias"], vocabulario
+        )
+        sim = cosine_similarity(
+            vetor_vaga, vetor_candidato, vetor_pesos
+        )
+        resultados.append({
+            "candidato_id": c["id"],
+            "similaridade": round(sim, 4),
+            "angulo_graus": round(
+                np.degrees(np.arccos(np.clip(sim, -1, 1))), 1
+            ),
+        })
+
+    df = pd.DataFrame(resultados)
+    return df.sort_values("similaridade",
+                          ascending=False).reset_index(drop=True)
+
+
+# ------------------------------------------------------------------
+# Exemplo de uso integrado
+# ------------------------------------------------------------------
+if __name__ == "__main__":
+    vocabulario = ["python", "sql", "docker", "react",
+                   "git", "powerbi", "java"]
+
+    vaga = {
+        "id": 1,
+        "competencias": {"python": 1, "sql": 1, "docker": 1,
+                         "git": 1},
+        "pesos":        {"python": 5, "sql": 4, "docker": 3,
+                         "git": 2},
+    }
+
+    candidatos = [
+        {"id": "CAND-001",
+         "competencias": {"python": 4, "sql": 3, "docker": 2,
+                          "git": 5, "react": 1}},
+        {"id": "CAND-002",
+         "competencias": {"python": 5, "sql": 5, "docker": 4,
+                          "git": 4}},
+        {"id": "CAND-003",
+         "competencias": {"react": 5, "java": 4, "powerbi": 3}},
+        {"id": "CAND-004",
+         "competencias": {"python": 2, "sql": 2, "docker": 1,
+                          "git": 3, "powerbi": 2}},
+    ]
+
+    ranking = construir_matriz_scores(candidatos, vaga, vocabulario)
+    print(ranking.to_string(index=False))
+\end{lstlisting}
+
+\subsection{Vantagens e Limitações}
+
+\begin{table}[H]
+\centering
+\caption{Análise da Cosine Similarity no projeto}
+\begin{tabular}{p{7cm} p{7cm}}
+  \toprule
+  \textbf{Vantagens} & \textbf{Limitações} \\
+  \midrule
+  Invariante à escala dos níveis & Não penaliza explicitamente competências obrigatórias ausentes \\
+  Captura estrutura dos perfis com precisão & Sensível à esparsidade (perfis com poucas competências) \\
+  Escala facilmente para milhares de candidatos & Exige vocabulário de competências bem definido \\
+  Compatible com embeddings de texto no futuro & Não considera experiência temporal ou contexto \\
+  Amplamente validado em sistemas de recomendação & Candidatos com listas curtas podem ser subavaliados \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% --------------------------------------------------
+\section{Arquitetura Integrada dos Algoritmos}
+
+\subsection{Visão Geral do Pipeline}
+
+Os dois algoritmos são complementares e devem ser usados em sequência, formando
+um \textbf{pipeline de matching em duas etapas}:
+
+\vspace{0.5cm}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+  \hline
+  \textbf{Etapa} & \textbf{Algoritmo} & \textbf{Função} & \textbf{Output} \\
+  \hline
+  1 & Pontuação Ponderada & Filtragem rápida & Lista reduzida \\
+  \hline
+  2 & Cosine Similarity & Ranking principal & Score de 0 a 1 \\
+  \hline
+\end{tabular}
+\end{center}
+\vspace{0.5cm}
+
+\subsection{Implementação do Pipeline Completo}
+
+\begin{lstlisting}[caption={Pipeline completo de matching},
+                   label={lst:pipeline}]
+class MotorDeMatching:
+    """
+    Pipeline integrado: Pontuacao Ponderada -> Cosine Similarity.
+    """
+
+    def __init__(self, vocabulario: list[str],
+                 limiar_ponderado: float = 0.4):
+        self.vocabulario = vocabulario
+        self.limiar_ponderado = limiar_ponderado  # Corte na etapa 1
+
+    def rankear(self,
+                candidatos: list[dict],
+                vaga: dict,
+                top_n: int = 10) -> list[dict]:
+        """
+        Executa o pipeline completo e retorna os top-N candidatos.
+        """
+        # ETAPA 1: Filtragem por Pontuacao Ponderada
+        candidatos_filtrados = []
+        for c in candidatos:
+            r = calcular_score_ponderado(
+                Candidato(c["id"], c["id"],
+                          c["competencias"],
+                          c.get("projetos", 0),
+                          c.get("experiencia", 0.0)),
+                Vaga(vaga["id"], "", vaga["competencias_config"])
+            )
+            # Descarta candidatos com ausencias obrigatorias
+            if r["ausencias_obrigatorias"] == 0:
+                candidatos_filtrados.append(c)
+
+        if not candidatos_filtrados:
+            return []
+
+        # ETAPA 2: Ranking por Cosine Similarity
+        ranking = construir_matriz_scores(
+            candidatos_filtrados, vaga, self.vocabulario
+        )
+
+        return ranking.head(top_n).to_dict(orient="records")
+
+\end{lstlisting}
+
+
+
+% --------------------------------------------------
+\section*{Referências}
+
+\begin{enumerate}
+  \item SALTON, G.; MCGILL, M. J. \textit{Introduction to Modern Information Retrieval}.
+        New York: McGraw-Hill, 1983.
+  \item SCIKIT-LEARN DEVELOPERS. \textit{sklearn.metrics.pairwise.cosine\_similarity}.
+        Disponível em: \url{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html}
+  \item PEDREGOSA, F. et al. Scikit-learn: Machine Learning in Python.
+        \textit{Journal of Machine Learning Research}, v. 12, p. 2825–2830, 2011.
+\end{enumerate}
+
+\end{document}
