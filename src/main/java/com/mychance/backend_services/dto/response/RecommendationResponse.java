@@ -1,0 +1,14 @@
+package com.mychance.backend_services.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+public record RecommendationResponse(
+		@JsonProperty("candidato_id") String candidatoId,
+		@JsonProperty("compatibilidade_score") double compatibilidadeScore,
+		@JsonProperty("competencias_tecnicas") List<String> competenciasTecnicas,
+		@JsonProperty("experiencias") List<ExperienceResponse> experiencias,
+		@JsonProperty("projetos_destaque") List<String> projetosDestaque
+) {
+}
