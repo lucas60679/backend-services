@@ -30,6 +30,44 @@ public class GlobalExceptionHandler {
 		return problem;
 	}
 
+	@ExceptionHandler(ProfileNotFoundException.class)
+	public ProblemDetail handleProfileNotFound(ProfileNotFoundException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+		problem.setTitle("Profile not found");
+		return problem;
+	}
+
+	@ExceptionHandler(InviteNotFoundException.class)
+	public ProblemDetail handleInviteNotFound(InviteNotFoundException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+		problem.setTitle("Invite not found");
+		return problem;
+	}
+
+	@ExceptionHandler(InvalidInviteTransitionException.class)
+	public ProblemDetail handleInvalidInviteTransition(InvalidInviteTransitionException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+		problem.setTitle("Invalid invite transition");
+		return problem;
+	}
+
+	@ExceptionHandler(NlpMatchingUnavailableException.class)
+	public ProblemDetail handleNlpUnavailable(NlpMatchingUnavailableException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+				HttpStatus.SERVICE_UNAVAILABLE,
+				exception.getMessage()
+		);
+		problem.setTitle("Matching service unavailable");
+		return problem;
+	}
+
+	@ExceptionHandler({InvalidEducationLevelException.class, InvalidRegionException.class})
+	public ProblemDetail handleInvalidMetadata(RuntimeException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+		problem.setTitle("Invalid profile metadata");
+		return problem;
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
 		String details = exception.getBindingResult().getFieldErrors().stream()
