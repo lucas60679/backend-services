@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/dev")
-@Profile("!prod")
+@Profile({"dev", "docker"})
 public class DevJobController {
 
 	private final JobVacancyRepository jobVacancyRepository;
