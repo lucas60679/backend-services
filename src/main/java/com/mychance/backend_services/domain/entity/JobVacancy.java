@@ -25,6 +25,12 @@ public class JobVacancy {
 	@Column(name = "recruiter_id", nullable = false)
 	private UUID recruiterId;
 
+	@Column(name = "description", columnDefinition = "TEXT")
+	private String description;
+
+	@Column(name = "max_salary")
+	private Integer maxSalary;
+
 	@OneToMany(mappedBy = "jobVacancy", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<JobRequirement> requirements = new ArrayList<>();
 
@@ -34,6 +40,13 @@ public class JobVacancy {
 	public JobVacancy(String title, UUID recruiterId) {
 		this.title = title;
 		this.recruiterId = recruiterId;
+	}
+
+	public JobVacancy(String title, UUID recruiterId, String description, Integer maxSalary) {
+		this.title = title;
+		this.recruiterId = recruiterId;
+		this.description = description;
+		this.maxSalary = maxSalary;
 	}
 
 	@PrePersist
@@ -53,6 +66,14 @@ public class JobVacancy {
 
 	public UUID getRecruiterId() {
 		return recruiterId;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public Integer getMaxSalary() {
+		return maxSalary;
 	}
 
 	public List<JobRequirement> getRequirements() {

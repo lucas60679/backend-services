@@ -11,4 +11,11 @@ public final class PublicIdFormatter {
 		String compact = profileId.toString().replace("-", "");
 		return "usr_" + compact.substring(0, 8);
 	}
+
+	public static String extractPrefix(String publicCandidateId) {
+		if (publicCandidateId == null || !publicCandidateId.startsWith("usr_") || publicCandidateId.length() < 12) {
+			throw new IllegalArgumentException("Invalid public candidate id: " + publicCandidateId);
+		}
+		return publicCandidateId.substring(4, 12);
+	}
 }

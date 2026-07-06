@@ -10,7 +10,10 @@ CREATE TABLE candidates (
 CREATE TABLE anonymous_profiles (
     id UUID PRIMARY KEY,
     candidate_id UUID NOT NULL UNIQUE REFERENCES candidates(id),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    education_level VARCHAR(50),
+    region_state VARCHAR(50),
+    salary_expectation_min INT CHECK (salary_expectation_min > 0)
 );
 
 CREATE TABLE candidate_skills (
@@ -36,7 +39,9 @@ CREATE TABLE candidate_experiences (
 CREATE TABLE job_vacancies (
     id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    recruiter_id UUID NOT NULL
+    recruiter_id UUID NOT NULL,
+    description TEXT,
+    max_salary INT CHECK (max_salary > 0)
 );
 
 CREATE TABLE job_requirements (
@@ -47,3 +52,16 @@ CREATE TABLE job_requirements (
     is_mandatory BOOLEAN NOT NULL DEFAULT FALSE,
     min_level INT NOT NULL CHECK (min_level BETWEEN 1 AND 5)
 );
+
+CREATE TABLE interview_invites (
+    id UUID PRIMARY KEY,
+    job_id UUID NOT NULL REFERENCES job_vacancies(id),
+    profile_id UUID NOT NULL REFERENCES anonymous_profiles(id),
+    status VARCHAR(20) NOT NULL,
+    message VARCHAR(500),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_interview_invites_profile_status ON interview_invites(profile_id, status);
+CREATE INDEX idx_interview_invites_job_id ON interview_invites(job_id);

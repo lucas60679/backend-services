@@ -11,11 +11,39 @@ import java.util.stream.Collectors;
 
 public enum SkillName {
 	PYTHON("python", "Python"),
+	JAVASCRIPT("javascript", "JavaScript"),
+	TYPESCRIPT("typescript", "TypeScript"),
+	JAVA("java", "Java"),
+	KOTLIN("kotlin", "Kotlin"),
+	GO("go", "Go"),
+	CSHARP("csharp", "C#"),
 	SQL("sql", "SQL"),
+	POSTGRESQL("postgresql", "PostgreSQL"),
+	MONGODB("mongodb", "MongoDB"),
+	REDIS("redis", "Redis"),
+	REACT("react", "React"),
+	ANGULAR("angular", "Angular"),
+	VUE("vue", "Vue"),
+	NODEJS("nodejs", "Node.js"),
+	SPRING("spring", "Spring Boot"),
+	DJANGO("django", "Django"),
+	FASTAPI("fastapi", "FastAPI"),
+	REST_API("rest_api", "REST API"),
+	GRAPHQL("graphql", "GraphQL"),
 	DOCKER("docker", "Docker"),
+	KUBERNETES("kubernetes", "Kubernetes"),
+	TERRAFORM("terraform", "Terraform"),
+	CICD("cicd", "CI/CD"),
+	AWS("aws", "AWS"),
+	AZURE("azure", "Azure"),
+	LINUX("linux", "Linux"),
+	GIT("git", "Git"),
+	KAFKA("kafka", "Apache Kafka"),
 	POWERBI("powerbi", "Power BI"),
 	STREAMLIT("streamlit", "Streamlit"),
-	POSTGRESQL("postgresql", "PostgreSQL");
+	MACHINE_LEARNING("machine_learning", "Machine Learning"),
+	DATA_ANALYSIS("data_analysis", "Análise de Dados"),
+	AGILE("agile", "Metodologias Ágeis");
 
 	private static final Map<String, SkillName> BY_KEY = Arrays.stream(values())
 			.collect(Collectors.toMap(skill -> skill.key, Function.identity()));

@@ -1,8 +1,12 @@
 package com.mychance.backend_services.domain.entity;
 
+import com.mychance.backend_services.domain.enums.BrazilianRegion;
+import com.mychance.backend_services.domain.enums.EducationLevel;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -29,6 +33,17 @@ public class AnonymousProfile {
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "education_level", length = 50)
+	private EducationLevel educationLevel;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "region_state", length = 50)
+	private BrazilianRegion regionState;
+
+	@Column(name = "salary_expectation_min")
+	private Integer salaryExpectationMin;
 
 	@OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CandidateSkill> skills = new ArrayList<>();
@@ -66,6 +81,30 @@ public class AnonymousProfile {
 
 	public Instant getCreatedAt() {
 		return createdAt;
+	}
+
+	public EducationLevel getEducationLevel() {
+		return educationLevel;
+	}
+
+	public void setEducationLevel(EducationLevel educationLevel) {
+		this.educationLevel = educationLevel;
+	}
+
+	public BrazilianRegion getRegionState() {
+		return regionState;
+	}
+
+	public void setRegionState(BrazilianRegion regionState) {
+		this.regionState = regionState;
+	}
+
+	public Integer getSalaryExpectationMin() {
+		return salaryExpectationMin;
+	}
+
+	public void setSalaryExpectationMin(Integer salaryExpectationMin) {
+		this.salaryExpectationMin = salaryExpectationMin;
 	}
 
 	public List<CandidateSkill> getSkills() {

@@ -15,9 +15,10 @@ class SkillNameTest {
 		assertThat(SkillName.fromKey(rawKey)).isEqualTo(SkillName.PYTHON);
 	}
 
-	@Test
-	void rejectsUnknownSkillKeys() {
-		assertThatThrownBy(() -> SkillName.fromKey("kubernetes"))
+	@ParameterizedTest
+	@ValueSource(strings = {"haskell", "invalid-skill"})
+	void rejectsUnknownSkillKeys(String rawKey) {
+		assertThatThrownBy(() -> SkillName.fromKey(rawKey))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("Unknown skill");
 	}
