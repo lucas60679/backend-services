@@ -7,6 +7,7 @@ import java.util.List;
 public record RecommendationResponse(
 		@JsonProperty("candidato_id") String candidatoId,
 		@JsonProperty("compatibilidade_score") double compatibilidadeScore,
+		@JsonProperty("compatibilidade") String compatibilidade,
 		@JsonProperty("competencias_tecnicas") List<String> competenciasTecnicas,
 		@JsonProperty("experiencias") List<ExperienceResponse> experiencias,
 		@JsonProperty("projetos_destaque") List<String> projetosDestaque

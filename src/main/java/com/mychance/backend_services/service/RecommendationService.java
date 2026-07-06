@@ -2,7 +2,8 @@ package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.JobVacancy;
-import com.mychance.backend_services.dto.adapter.MatchingPayload;
+import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
+import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
 import com.mychance.backend_services.dto.response.ExperienceResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
 import com.mychance.backend_services.exception.JobNotFoundException;
@@ -14,26 +15,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
 
 	private final JobVacancyRepository jobVacancyRepository;
 	private final AnonymousProfileRepository anonymousProfileRepository;
-	private final MatchingAdapter matchingAdapter;
-	private final MatchingEngine matchingEngine;
+	private final MatchingRequestBuilder matchingRequestBuilder;
+	private final NlpMatchingClient nlpMatchingClient;
 
 	public RecommendationService(
 			JobVacancyRepository jobVacancyRepository,
 			AnonymousProfileRepository anonymousProfileRepository,
-			MatchingAdapter matchingAdapter,
-			MatchingEngine matchingEngine
+			MatchingRequestBuilder matchingRequestBuilder,
+			NlpMatchingClient nlpMatchingClient
 	) {
 		this.jobVacancyRepository = jobVacancyRepository;
 		this.anonymousProfileRepository = anonymousProfileRepository;
-		this.matchingAdapter = matchingAdapter;
-		this.matchingEngine = matchingEngine;
+		this.matchingRequestBuilder = matchingRequestBuilder;
+		this.nlpMatchingClient = nlpMatchingClient;
 	}
 
 	@Transactional(readOnly = true)
@@ -41,14 +45,37 @@ public class RecommendationService {
 		JobVacancy jobVacancy = jobVacancyRepository.findByIdWithRequirements(jobId)
 				.orElseThrow(() -> new JobNotFoundException(jobId));
 
-		List<AnonymousProfile> profiles = anonymousProfileRepository.findAll();
+		List<AnonymousProfile> profiles = anonymousProfileRepository.findAll().stream()
+				.filter(profile -> isSalaryCompatible(profile, jobVacancy))
+				.toList();
 		profiles.forEach(this::initializeProfileDetails);
 
-		return profiles.stream()
-				.map(profile -> toRecommendation(profile, jobVacancy))
-				.filter(recommendation -> recommendation.compatibilidadeScore() > 0.0)
+		if (profiles.isEmpty()) {
+			return List.of();
+		}
+
+		MatchingRankRequest request = matchingRequestBuilder.buildBatchRequest(profiles, jobVacancy);
+		MatchingRankResponse nlpResponse = nlpMatchingClient.rankCandidates(request);
+
+		Map<String, AnonymousProfile> profilesByPublicId = profiles.stream()
+				.collect(Collectors.toMap(
+						profile -> PublicIdFormatter.toPublicCandidateId(profile.getId()),
+						Function.identity()
+				));
+
+		return nlpResponse.ranking().stream()
+				.filter(ranking -> ranking.aprovadoFiltragem() && ranking.compatibilidadeScore() > 0.0)
+				.map(ranking -> toRecommendation(ranking, profilesByPublicId.get(ranking.candidatoId())))
+				.filter(recommendation -> recommendation != null)
 				.sorted(Comparator.comparingDouble(RecommendationResponse::compatibilidadeScore).reversed())
 				.toList();
+	}
+
+	private boolean isSalaryCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		if (jobVacancy.getMaxSalary() == null || profile.getSalaryExpectationMin() == null) {
+			return true;
+		}
+		return profile.getSalaryExpectationMin() <= jobVacancy.getMaxSalary();
 	}
 
 	private void initializeProfileDetails(AnonymousProfile profile) {
@@ -57,9 +84,13 @@ public class RecommendationService {
 		profile.getExperiences().size();
 	}
 
-	private RecommendationResponse toRecommendation(AnonymousProfile profile, JobVacancy jobVacancy) {
-		MatchingPayload payload = matchingAdapter.adapt(profile, jobVacancy);
-		double score = matchingEngine.computeScore(payload, jobVacancy);
+	private RecommendationResponse toRecommendation(
+			MatchingRankResponse.RankedCandidatePayload ranking,
+			AnonymousProfile profile
+	) {
+		if (profile == null) {
+			return null;
+		}
 
 		List<String> competencias = profile.getSkills().stream()
 				.filter(skill -> skill.getSkillLevel() > 0)
@@ -75,8 +106,9 @@ public class RecommendationService {
 				.toList();
 
 		return new RecommendationResponse(
-				PublicIdFormatter.toPublicCandidateId(profile.getId()),
-				Math.round(score * 100.0) / 100.0,
+				ranking.candidatoId(),
+				Math.round(ranking.compatibilidadeScore() * 100.0) / 100.0,
+				ranking.compatibilidade(),
 				competencias,
 				experiencias,
 				projetos

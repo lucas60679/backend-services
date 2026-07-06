@@ -6,9 +6,11 @@ import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
 import com.mychance.backend_services.exception.JobNotFoundException;
 import com.mychance.backend_services.repository.JobVacancyRepository;
+import com.mychance.backend_services.support.TestNlpMatchingConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
+@Import(TestNlpMatchingConfig.class)
 @Transactional
 class RecommendationServiceIntegrationTest {
 
@@ -95,7 +98,10 @@ class RecommendationServiceIntegrationTest {
 		candidateProfileService.createProfile(new ProfileCreateRequest(
 				skills,
 				List.of(new ExperienceRequest("Desenvolvedor", experienceMonths)),
-				List.of("Projeto relevante para a vaga.")
+				List.of("Projeto relevante para a vaga."),
+				null,
+				null,
+				5000
 		));
 	}
 }
