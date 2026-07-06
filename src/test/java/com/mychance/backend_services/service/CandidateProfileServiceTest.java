@@ -29,14 +29,17 @@ class CandidateProfileServiceTest {
 	@Test
 	void rejectsUnknownSkills() {
 		ProfileCreateRequest request = new ProfileCreateRequest(
-				Map.of("kubernetes", 5),
+				Map.of("haskell", 5),
 				List.of(new ExperienceRequest("Dev", 12)),
-				List.of("Projeto limpo")
+				List.of("Projeto limpo"),
+				null,
+				null,
+				5000
 		);
 
 		assertThatThrownBy(() -> candidateProfileService.createProfile(request))
 				.isInstanceOf(InvalidSkillException.class)
-				.hasMessageContaining("kubernetes");
+				.hasMessageContaining("haskell");
 	}
 
 	@Test
@@ -44,7 +47,10 @@ class CandidateProfileServiceTest {
 		ProfileCreateRequest request = new ProfileCreateRequest(
 				Map.of("python", 3),
 				List.of(new ExperienceRequest("Dev", 12)),
-				List.of("Contato: dev@email.com — veja github.com/dev/portfolio")
+				List.of("Contato: dev@email.com — veja github.com/dev/portfolio"),
+				null,
+				null,
+				5000
 		);
 
 		candidateProfileService.createProfile(request);
@@ -65,7 +71,10 @@ class CandidateProfileServiceTest {
 						new ExperienceRequest("Backend Júnior", 14),
 						new ExperienceRequest("Estagiário", 6)
 				),
-				List.of("API REST", "Pipeline de dados")
+				List.of("API REST", "Pipeline de dados"),
+				"graduacao_concluida",
+				"nordeste",
+				6500
 		);
 
 		candidateProfileService.createProfile(request);

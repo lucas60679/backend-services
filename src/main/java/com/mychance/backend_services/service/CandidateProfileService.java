@@ -5,10 +5,15 @@ import com.mychance.backend_services.domain.entity.Candidate;
 import com.mychance.backend_services.domain.entity.CandidateExperience;
 import com.mychance.backend_services.domain.entity.CandidateProject;
 import com.mychance.backend_services.domain.entity.CandidateSkill;
+import com.mychance.backend_services.domain.enums.BrazilianRegion;
+import com.mychance.backend_services.domain.enums.EducationLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
+import com.mychance.backend_services.exception.InvalidEducationLevelException;
+import com.mychance.backend_services.exception.InvalidRegionException;
 import com.mychance.backend_services.exception.InvalidSkillException;
+import com.mychance.backend_services.exception.ProfileNotFoundException;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
 import com.mychance.backend_services.repository.CandidateRepository;
 import com.mychance.backend_services.util.PublicIdFormatter;
@@ -24,15 +29,18 @@ public class CandidateProfileService {
 	private final CandidateRepository candidateRepository;
 	private final AnonymousProfileRepository anonymousProfileRepository;
 	private final TextSanitizerService textSanitizerService;
+	private final InterviewInviteService interviewInviteService;
 
 	public CandidateProfileService(
 			CandidateRepository candidateRepository,
 			AnonymousProfileRepository anonymousProfileRepository,
-			TextSanitizerService textSanitizerService
+			TextSanitizerService textSanitizerService,
+			InterviewInviteService interviewInviteService
 	) {
 		this.candidateRepository = candidateRepository;
 		this.anonymousProfileRepository = anonymousProfileRepository;
 		this.textSanitizerService = textSanitizerService;
+		this.interviewInviteService = interviewInviteService;
 	}
 
 	@Transactional
@@ -45,15 +53,60 @@ public class CandidateProfileService {
 		candidateRepository.save(candidate);
 
 		AnonymousProfile profile = new AnonymousProfile(candidate);
-		mapSkills(request.competencias(), profile);
-		mapExperiences(request, profile);
-		mapProjects(request, profile);
+		applyProfileData(request, profile);
 
 		AnonymousProfile saved = anonymousProfileRepository.save(profile);
 		return new ProfileCreateResponse(
 				PublicIdFormatter.toPublicCandidateId(saved.getId()),
 				"Perfil anonimizado criado com sucesso"
 		);
+	}
+
+	@Transactional
+	public ProfileCreateResponse updateProfile(String publicCandidateId, ProfileCreateRequest request) {
+		AnonymousProfile profile = findProfileByPublicId(publicCandidateId);
+		profile.getSkills().clear();
+		profile.getExperiences().clear();
+		profile.getProjects().clear();
+		applyProfileData(request, profile);
+
+		AnonymousProfile saved = anonymousProfileRepository.save(profile);
+		interviewInviteService.invalidatePendingInvitesForProfile(saved);
+
+		return new ProfileCreateResponse(
+				PublicIdFormatter.toPublicCandidateId(saved.getId()),
+				"Perfil anonimizado atualizado com sucesso"
+		);
+	}
+
+	private void applyProfileData(ProfileCreateRequest request, AnonymousProfile profile) {
+		mapSkills(request.competencias(), profile);
+		mapExperiences(request, profile);
+		mapProjects(request, profile);
+		mapAnonymizedMetadata(request, profile);
+		profile.setSalaryExpectationMin(request.pretensaoSalarialMinima());
+	}
+
+	private void mapAnonymizedMetadata(ProfileCreateRequest request, AnonymousProfile profile) {
+		if (request.nivelEscolaridade() != null && !request.nivelEscolaridade().isBlank()) {
+			if (!EducationLevel.isValidKey(request.nivelEscolaridade())) {
+				throw new InvalidEducationLevelException(request.nivelEscolaridade());
+			}
+			profile.setEducationLevel(EducationLevel.fromKey(request.nivelEscolaridade()));
+		}
+
+		if (request.regiao() != null && !request.regiao().isBlank()) {
+			if (!BrazilianRegion.isValidKey(request.regiao())) {
+				throw new InvalidRegionException(request.regiao());
+			}
+			profile.setRegionState(BrazilianRegion.fromKey(request.regiao()));
+		}
+	}
+
+	private AnonymousProfile findProfileByPublicId(String publicCandidateId) {
+		String prefix = PublicIdFormatter.extractPrefix(publicCandidateId);
+		return anonymousProfileRepository.findByPublicIdPrefix(prefix)
+				.orElseThrow(() -> new ProfileNotFoundException(publicCandidateId));
 	}
 
 	private void mapSkills(Map<String, Integer> competencias, AnonymousProfile profile) {

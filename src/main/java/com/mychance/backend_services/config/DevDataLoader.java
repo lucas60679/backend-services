@@ -28,7 +28,9 @@ public class DevDataLoader {
 
 			JobVacancy vacancy = new JobVacancy(
 					"Desenvolvedor Backend Python",
-					UUID.fromString("11111111-1111-1111-1111-111111111111")
+					UUID.fromString("11111111-1111-1111-1111-111111111111"),
+					"Vaga seed para desenvolvimento local com foco em Python e dados.",
+					12000
 			);
 			vacancy.addRequirement(new JobRequirement(SkillName.PYTHON, 5, true, 3));
 			vacancy.addRequirement(new JobRequirement(SkillName.SQL, 4, true, 3));
