@@ -4,10 +4,14 @@ import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
 import com.mychance.backend_services.exception.NlpMatchingUnavailableException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class NlpMatchingClient {
@@ -35,6 +39,13 @@ public class NlpMatchingClient {
 					.contentType(MediaType.APPLICATION_JSON)
 					.body(request)
 					.retrieve()
+					.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
+						String body = readBody(httpResponse);
+						throw new NlpMatchingUnavailableException(
+								"NLP matching service returned HTTP " + httpResponse.getStatusCode().value()
+										+ (body.isBlank() ? "" : ": " + body)
+						);
+					})
 					.body(MatchingRankResponse.class);
 
 			if (response == null || response.ranking() == null) {
@@ -43,11 +54,24 @@ public class NlpMatchingClient {
 
 			return response;
 		}
+		catch (NlpMatchingUnavailableException exception) {
+			throw exception;
+		}
 		catch (RestClientException exception) {
 			throw new NlpMatchingUnavailableException(
 					"NLP matching service is unavailable",
 					exception
 			);
+		}
+	}
+
+	private static String readBody(org.springframework.http.client.ClientHttpResponse response) {
+		try {
+			byte[] bytes = response.getBody().readAllBytes();
+			return bytes.length == 0 ? "" : new String(bytes, StandardCharsets.UTF_8);
+		}
+		catch (IOException exception) {
+			return "";
 		}
 	}
 }

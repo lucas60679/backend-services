@@ -30,4 +30,6 @@ public interface InterviewInviteRepository extends JpaRepository<InterviewInvite
 	List<InterviewInvite> findByJobId(@Param("jobId") UUID jobId);
 
 	List<InterviewInvite> findByProfileIdAndStatusIn(UUID profileId, List<InviteStatus> statuses);
+
+	boolean existsByJobVacancyIdAndProfileIdAndStatusIn(UUID jobId, UUID profileId, List<InviteStatus> statuses);
 }

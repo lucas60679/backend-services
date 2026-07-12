@@ -1,11 +1,14 @@
 package com.mychance.backend_services.service;
 
+import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.dto.request.ExperienceRequest;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
 import com.mychance.backend_services.exception.JobNotFoundException;
+import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
+import com.mychance.backend_services.support.AccountTestBuilder;
 import com.mychance.backend_services.support.TestNlpMatchingConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,11 @@ class RecommendationServiceIntegrationTest {
 
 	@Autowired
 	private JobVacancyRepository jobVacancyRepository;
+
+	@Autowired
+	private AccountRepository accountRepository;
+
+	private int profileCounter;
 
 	@Test
 	void throwsWhenJobDoesNotExist() {
@@ -95,7 +103,11 @@ class RecommendationServiceIntegrationTest {
 	}
 
 	private void createProfile(Map<String, Integer> skills, int experienceMonths) {
-		candidateProfileService.createProfile(new ProfileCreateRequest(
+		profileCounter++;
+		Account account = accountRepository.save(
+				AccountTestBuilder.candidateAccount("recommendation-" + profileCounter + "@test.local")
+		);
+		candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
 				skills,
 				List.of(new ExperienceRequest("Desenvolvedor", experienceMonths)),
 				List.of("Projeto relevante para a vaga."),

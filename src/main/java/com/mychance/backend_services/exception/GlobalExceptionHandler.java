@@ -1,5 +1,7 @@
 package com.mychance.backend_services.exception;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -65,6 +67,55 @@ public class GlobalExceptionHandler {
 	public ProblemDetail handleInvalidMetadata(RuntimeException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
 		problem.setTitle("Invalid profile metadata");
+		return problem;
+	}
+
+	@ExceptionHandler(EmailAlreadyRegisteredException.class)
+	public ProblemDetail handleEmailAlreadyRegistered(EmailAlreadyRegisteredException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+		problem.setTitle("Email already registered");
+		return problem;
+	}
+
+	@ExceptionHandler(InvalidCredentialsException.class)
+	public ProblemDetail handleInvalidCredentials(InvalidCredentialsException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+		problem.setTitle("Invalid credentials");
+		return problem;
+	}
+
+	@ExceptionHandler(ResourceAccessDeniedException.class)
+	public ProblemDetail handleResourceAccessDenied(ResourceAccessDeniedException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
+		problem.setTitle("Access denied");
+		return problem;
+	}
+
+	@ExceptionHandler(ProfileAlreadyExistsException.class)
+	public ProblemDetail handleProfileAlreadyExists(ProfileAlreadyExistsException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+		problem.setTitle("Profile already exists");
+		return problem;
+	}
+
+	@ExceptionHandler(AuthenticationException.class)
+	public ProblemDetail handleAuthentication(AuthenticationException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication required");
+		problem.setTitle("Unauthorized");
+		return problem;
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	public ProblemDetail handleAccessDenied(AccessDeniedException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Access denied");
+		problem.setTitle("Forbidden");
+		return problem;
+	}
+
+	@ExceptionHandler(DuplicateInviteException.class)
+	public ProblemDetail handleDuplicateInvite(DuplicateInviteException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+		problem.setTitle("Duplicate invite");
 		return problem;
 	}
 

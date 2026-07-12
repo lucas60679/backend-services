@@ -1,5 +1,6 @@
 package com.mychance.backend_services.support;
 
+import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.Candidate;
 import com.mychance.backend_services.domain.entity.CandidateExperience;
@@ -13,7 +14,8 @@ public final class ProfileTestBuilder {
 	}
 
 	public static AnonymousProfile anonymousProfile() {
-		Candidate candidate = new Candidate("Candidato Teste", "teste@mychance.local");
+		Account account = AccountTestBuilder.candidateAccount("teste@mychance.local");
+		Candidate candidate = AccountTestBuilder.candidateFrom(account);
 		return new AnonymousProfile(candidate);
 	}
 

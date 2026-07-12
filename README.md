@@ -26,14 +26,18 @@ Perfil **dev** usa H2 em memória. Para recomendações com score de compatibili
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/api/v1/candidates/profiles` | Cria perfil |
-| PUT | `/api/v1/candidates/profiles/{candidatoId}` | Atualiza perfil |
-| POST | `/api/v1/jobs` | Cria vaga |
+| POST | `/api/v1/auth/register` | Cria conta |
+| POST | `/api/v1/auth/login` | Login (retorna JWT) |
+| GET | `/api/v1/auth/me` | Usuário autenticado |
+| POST | `/api/v1/candidates/profiles` | Cria perfil (candidato autenticado) |
+| PUT | `/api/v1/candidates/profiles/me` | Atualiza perfil |
+| POST | `/api/v1/jobs` | Cria vaga (recrutador autenticado) |
+| GET | `/api/v1/jobs/mine` | Lista vagas do recrutador |
 | GET | `/api/v1/jobs/{jobId}/recommendations` | Recomenda candidatos |
 | POST | `/api/v1/jobs/{jobId}/invites` | Envia convite |
 | POST | `/api/v1/invites/{inviteId}/accept` | Aceita convite |
 | POST | `/api/v1/invites/{inviteId}/reject` | Recusa convite |
-| GET | `/api/v1/candidates/{candidatoId}/invites` | Lista convites |
+| GET | `/api/v1/candidates/me/invites` | Lista convites |
 | GET | `/health` | Health check |
 
 Detalhes dos contratos JSON: [`docs/api-contracts.md`](docs/api-contracts.md)
@@ -46,7 +50,7 @@ mychance.nlp.base-url=http://localhost:8000
 mychance.nlp.enabled=true
 ```
 
-Em produção, use as variáveis `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `MYCHANCE_NLP_BASE_URL` e `MYCHANCE_NLP_ENABLED`.
+Em produção, use as variáveis `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `MYCHANCE_NLP_BASE_URL`, `MYCHANCE_NLP_ENABLED`, `MYCHANCE_JWT_SECRET`.
 
 ## Produção
 

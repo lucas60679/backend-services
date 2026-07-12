@@ -2,14 +2,20 @@ package com.mychance.backend_services.controller;
 
 import com.mychance.backend_services.dto.request.JobCreateRequest;
 import com.mychance.backend_services.dto.response.JobCreateResponse;
+import com.mychance.backend_services.dto.response.JobSummaryResponse;
+import com.mychance.backend_services.security.AuthenticatedUser;
 import com.mychance.backend_services.service.JobVacancyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/jobs")
@@ -23,7 +29,15 @@ public class JobVacancyController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public JobCreateResponse createJob(@Valid @RequestBody JobCreateRequest request) {
-		return jobVacancyService.createJob(request);
+	public JobCreateResponse createJob(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@Valid @RequestBody JobCreateRequest request
+	) {
+		return jobVacancyService.createJob(user.id(), request);
+	}
+
+	@GetMapping("/mine")
+	public List<JobSummaryResponse> listMyJobs(@AuthenticationPrincipal AuthenticatedUser user) {
+		return jobVacancyService.listRecruiterJobs(user.id());
 	}
 }

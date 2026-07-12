@@ -1,5 +1,7 @@
 package com.mychance.backend_services.service;
 
+import com.mychance.backend_services.domain.entity.Account;
+import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.domain.enums.InviteStatus;
 import com.mychance.backend_services.dto.request.ExperienceRequest;
@@ -8,8 +10,10 @@ import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidInviteTransitionException;
+import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.InterviewInviteRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
+import com.mychance.backend_services.support.AccountTestBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,17 +42,14 @@ class InterviewInviteServiceIntegrationTest {
 	@Autowired
 	private InterviewInviteRepository interviewInviteRepository;
 
+	@Autowired
+	private AccountRepository accountRepository;
+
 	@Test
 	void sendsAcceptsAndRejectsInvites() {
 		JobVacancy job = jobVacancyRepository.findAll().get(0);
-		ProfileCreateResponse profile = candidateProfileService.createProfile(new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Projeto anonimizado"),
-				null,
-				null,
-				5000
-		));
+		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("invite-1@test.local"));
+		ProfileCreateResponse profile = createProfile(account, "invite-1@test.local");
 
 		InviteResponse sent = interviewInviteService.sendInvite(
 				job.getId(),
@@ -56,43 +57,31 @@ class InterviewInviteServiceIntegrationTest {
 		);
 		assertThat(sent.status()).isEqualTo(InviteStatus.ENVIADO.name());
 
-		InviteResponse accepted = interviewInviteService.acceptInvite(sent.conviteId());
+		InviteResponse accepted = interviewInviteService.acceptInvite(sent.conviteId(), account.getId());
 		assertThat(accepted.status()).isEqualTo(InviteStatus.ACEITO.name());
 
-		ProfileCreateResponse secondProfile = candidateProfileService.createProfile(new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Outro projeto"),
-				null,
-				null,
-				5000
-		));
+		Account secondAccount = accountRepository.save(AccountTestBuilder.candidateAccount("invite-2@test.local"));
+		ProfileCreateResponse secondProfile = createProfile(secondAccount, "invite-2@test.local");
 		InviteResponse secondInvite = interviewInviteService.sendInvite(
 				job.getId(),
 				new InviteCreateRequest(secondProfile.candidatoId(), "Segunda proposta")
 		);
-		InviteResponse rejected = interviewInviteService.rejectInvite(secondInvite.conviteId());
+		InviteResponse rejected = interviewInviteService.rejectInvite(secondInvite.conviteId(), secondAccount.getId());
 		assertThat(rejected.status()).isEqualTo(InviteStatus.RECUSADO.name());
 	}
 
 	@Test
 	void invalidatesPendingInviteWhenProfileBecomesIncompatible() {
 		JobVacancy job = jobVacancyRepository.findAll().get(0);
-		ProfileCreateResponse profile = candidateProfileService.createProfile(new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Projeto anonimizado"),
-				null,
-				null,
-				5000
-		));
+		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("invite-3@test.local"));
+		ProfileCreateResponse profile = createProfile(account, "invite-3@test.local");
 
 		InviteResponse sent = interviewInviteService.sendInvite(
 				job.getId(),
 				new InviteCreateRequest(profile.candidatoId(), "Proposta")
 		);
 
-		candidateProfileService.updateProfile(profile.candidatoId(), new ProfileCreateRequest(
+		candidateProfileService.updateProfile(account.getId(), new ProfileCreateRequest(
 				Map.of("python", 1, "sql", 5),
 				List.of(new ExperienceRequest("Dev", 24)),
 				List.of("Perfil atualizado"),
@@ -108,23 +97,28 @@ class InterviewInviteServiceIntegrationTest {
 	@Test
 	void blocksAcceptAfterReject() {
 		JobVacancy job = jobVacancyRepository.findAll().get(0);
-		ProfileCreateResponse profile = candidateProfileService.createProfile(new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Projeto"),
-				null,
-				null,
-				5000
-		));
+		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("invite-4@test.local"));
+		ProfileCreateResponse profile = createProfile(account, "invite-4@test.local");
 
 		InviteResponse sent = interviewInviteService.sendInvite(
 				job.getId(),
 				new InviteCreateRequest(profile.candidatoId(), "Proposta")
 		);
-		interviewInviteService.rejectInvite(sent.conviteId());
+		interviewInviteService.rejectInvite(sent.conviteId(), account.getId());
 
 		UUID inviteId = sent.conviteId();
-		assertThatThrownBy(() -> interviewInviteService.acceptInvite(inviteId))
+		assertThatThrownBy(() -> interviewInviteService.acceptInvite(inviteId, account.getId()))
 				.isInstanceOf(InvalidInviteTransitionException.class);
+	}
+
+	private ProfileCreateResponse createProfile(Account account, String ignoredEmail) {
+		return candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
+				Map.of("python", 5, "sql", 5),
+				List.of(new ExperienceRequest("Dev", 24)),
+				List.of("Projeto anonimizado"),
+				null,
+				null,
+				5000
+		));
 	}
 }

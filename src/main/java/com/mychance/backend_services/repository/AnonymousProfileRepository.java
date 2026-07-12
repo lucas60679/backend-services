@@ -18,6 +18,12 @@ public interface AnonymousProfileRepository extends JpaRepository<AnonymousProfi
 
 	@Query("""
 			SELECT profile FROM AnonymousProfile profile
+			WHERE profile.candidate.id = :candidateId
+			""")
+	Optional<AnonymousProfile> findByCandidateId(@Param("candidateId") UUID candidateId);
+
+	@Query("""
+			SELECT profile FROM AnonymousProfile profile
 			LEFT JOIN FETCH profile.skills
 			LEFT JOIN FETCH profile.experiences
 			LEFT JOIN FETCH profile.projects

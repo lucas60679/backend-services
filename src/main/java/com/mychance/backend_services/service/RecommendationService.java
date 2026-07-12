@@ -6,8 +6,10 @@ import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
 import com.mychance.backend_services.dto.response.ExperienceResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
+import com.mychance.backend_services.domain.enums.InviteStatus;
 import com.mychance.backend_services.exception.JobNotFoundException;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
+import com.mychance.backend_services.repository.InterviewInviteRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
 import com.mychance.backend_services.util.PublicIdFormatter;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,23 +31,32 @@ public class RecommendationService {
 	private final AnonymousProfileRepository anonymousProfileRepository;
 	private final MatchingRequestBuilder matchingRequestBuilder;
 	private final NlpMatchingClient nlpMatchingClient;
+	private final InterviewInviteRepository interviewInviteRepository;
 
 	public RecommendationService(
 			JobVacancyRepository jobVacancyRepository,
 			AnonymousProfileRepository anonymousProfileRepository,
 			MatchingRequestBuilder matchingRequestBuilder,
-			NlpMatchingClient nlpMatchingClient
+			NlpMatchingClient nlpMatchingClient,
+			InterviewInviteRepository interviewInviteRepository
 	) {
 		this.jobVacancyRepository = jobVacancyRepository;
 		this.anonymousProfileRepository = anonymousProfileRepository;
 		this.matchingRequestBuilder = matchingRequestBuilder;
 		this.nlpMatchingClient = nlpMatchingClient;
+		this.interviewInviteRepository = interviewInviteRepository;
 	}
 
 	@Transactional(readOnly = true)
 	public List<RecommendationResponse> getRecommendations(UUID jobId) {
 		JobVacancy jobVacancy = jobVacancyRepository.findByIdWithRequirements(jobId)
 				.orElseThrow(() -> new JobNotFoundException(jobId));
+
+		Set<String> invitedCandidateIds = interviewInviteRepository.findByJobId(jobId).stream()
+				.filter(invite -> invite.getStatus() == InviteStatus.ENVIADO
+						|| invite.getStatus() == InviteStatus.ACEITO)
+				.map(invite -> PublicIdFormatter.toPublicCandidateId(invite.getProfile().getId()))
+				.collect(Collectors.toSet());
 
 		List<AnonymousProfile> profiles = anonymousProfileRepository.findAll().stream()
 				.filter(profile -> isSalaryCompatible(profile, jobVacancy))
@@ -63,12 +76,30 @@ public class RecommendationService {
 						Function.identity()
 				));
 
-		return nlpResponse.ranking().stream()
+		List<RecommendationResponse> ranked = nlpResponse.ranking().stream()
 				.filter(ranking -> ranking.aprovadoFiltragem() && ranking.compatibilidadeScore() > 0.0)
 				.map(ranking -> toRecommendation(ranking, profilesByPublicId.get(ranking.candidatoId())))
 				.filter(recommendation -> recommendation != null)
+				.filter(recommendation -> !invitedCandidateIds.contains(recommendation.candidatoId()))
 				.sorted(Comparator.comparingDouble(RecommendationResponse::compatibilidadeScore).reversed())
 				.toList();
+
+		AtomicInteger position = new AtomicInteger(1);
+		return ranked.stream()
+				.map(recommendation -> withPosition(recommendation, position.getAndIncrement()))
+				.toList();
+	}
+
+	private RecommendationResponse withPosition(RecommendationResponse recommendation, int position) {
+		return new RecommendationResponse(
+				position,
+				recommendation.candidatoId(),
+				recommendation.compatibilidadeScore(),
+				recommendation.compatibilidade(),
+				recommendation.competenciasTecnicas(),
+				recommendation.experiencias(),
+				recommendation.projetosDestaque()
+		);
 	}
 
 	private boolean isSalaryCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
@@ -106,6 +137,7 @@ public class RecommendationService {
 				.toList();
 
 		return new RecommendationResponse(
+				0,
 				ranking.candidatoId(),
 				Math.round(ranking.compatibilidadeScore() * 100.0) / 100.0,
 				ranking.compatibilidade(),

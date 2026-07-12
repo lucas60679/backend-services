@@ -38,6 +38,12 @@ public class InterviewInvite {
 	@Column(length = 500)
 	private String message;
 
+	@Column(name = "proposed_interview_at")
+	private Instant proposedInterviewAt;
+
+	@Column(name = "meeting_link", length = 500)
+	private String meetingLink;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -91,6 +97,22 @@ public class InterviewInvite {
 
 	public String getMessage() {
 		return message;
+	}
+
+	public Instant getProposedInterviewAt() {
+		return proposedInterviewAt;
+	}
+
+	public void setProposedInterviewAt(Instant proposedInterviewAt) {
+		this.proposedInterviewAt = proposedInterviewAt;
+	}
+
+	public String getMeetingLink() {
+		return meetingLink;
+	}
+
+	public void setMeetingLink(String meetingLink) {
+		this.meetingLink = meetingLink;
 	}
 
 	public Instant getCreatedAt() {

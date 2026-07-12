@@ -1,5 +1,6 @@
 package com.mychance.backend_services.service;
 
+import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.Candidate;
 import com.mychance.backend_services.domain.entity.CandidateExperience;
@@ -8,12 +9,17 @@ import com.mychance.backend_services.domain.entity.CandidateSkill;
 import com.mychance.backend_services.domain.enums.BrazilianRegion;
 import com.mychance.backend_services.domain.enums.EducationLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
+import com.mychance.backend_services.domain.enums.UserRole;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
+import com.mychance.backend_services.dto.response.MyProfileResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidEducationLevelException;
 import com.mychance.backend_services.exception.InvalidRegionException;
 import com.mychance.backend_services.exception.InvalidSkillException;
+import com.mychance.backend_services.exception.ProfileAlreadyExistsException;
 import com.mychance.backend_services.exception.ProfileNotFoundException;
+import com.mychance.backend_services.exception.ResourceAccessDeniedException;
+import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
 import com.mychance.backend_services.repository.CandidateRepository;
 import com.mychance.backend_services.util.PublicIdFormatter;
@@ -26,17 +32,20 @@ import java.util.UUID;
 @Service
 public class CandidateProfileService {
 
+	private final AccountRepository accountRepository;
 	private final CandidateRepository candidateRepository;
 	private final AnonymousProfileRepository anonymousProfileRepository;
 	private final TextSanitizerService textSanitizerService;
 	private final InterviewInviteService interviewInviteService;
 
 	public CandidateProfileService(
+			AccountRepository accountRepository,
 			CandidateRepository candidateRepository,
 			AnonymousProfileRepository anonymousProfileRepository,
 			TextSanitizerService textSanitizerService,
 			InterviewInviteService interviewInviteService
 	) {
+		this.accountRepository = accountRepository;
 		this.candidateRepository = candidateRepository;
 		this.anonymousProfileRepository = anonymousProfileRepository;
 		this.textSanitizerService = textSanitizerService;
@@ -44,14 +53,13 @@ public class CandidateProfileService {
 	}
 
 	@Transactional
-	public ProfileCreateResponse createProfile(ProfileCreateRequest request) {
-		UUID candidateId = UUID.randomUUID();
-		Candidate candidate = new Candidate(
-				"Candidato " + candidateId.toString().substring(0, 8),
-				"candidate-" + candidateId + "@mychance.local"
-		);
-		candidateRepository.save(candidate);
+	public ProfileCreateResponse createProfile(UUID accountId, ProfileCreateRequest request) {
+		Account account = getCandidateAccount(accountId);
+		if (anonymousProfileRepository.findByCandidateId(accountId).isPresent()) {
+			throw new ProfileAlreadyExistsException();
+		}
 
+		Candidate candidate = candidateRepository.save(new Candidate(account));
 		AnonymousProfile profile = new AnonymousProfile(candidate);
 		applyProfileData(request, profile);
 
@@ -63,8 +71,8 @@ public class CandidateProfileService {
 	}
 
 	@Transactional
-	public ProfileCreateResponse updateProfile(String publicCandidateId, ProfileCreateRequest request) {
-		AnonymousProfile profile = findProfileByPublicId(publicCandidateId);
+	public ProfileCreateResponse updateProfile(UUID accountId, ProfileCreateRequest request) {
+		AnonymousProfile profile = getOwnedProfile(accountId);
 		profile.getSkills().clear();
 		profile.getExperiences().clear();
 		profile.getProjects().clear();
@@ -77,6 +85,30 @@ public class CandidateProfileService {
 				PublicIdFormatter.toPublicCandidateId(saved.getId()),
 				"Perfil anonimizado atualizado com sucesso"
 		);
+	}
+
+	@Transactional(readOnly = true)
+	public MyProfileResponse getMyProfile(UUID accountId) {
+		AnonymousProfile profile = getOwnedProfile(accountId);
+		return new MyProfileResponse(
+				PublicIdFormatter.toPublicCandidateId(profile.getId()),
+				"Perfil encontrado"
+		);
+	}
+
+	private Account getCandidateAccount(UUID accountId) {
+		Account account = accountRepository.findById(accountId)
+				.orElseThrow(() -> new ResourceAccessDeniedException("Account not found"));
+		if (account.getRole() != UserRole.CANDIDATE) {
+			throw new ResourceAccessDeniedException("Only candidates can manage profiles");
+		}
+		return account;
+	}
+
+	private AnonymousProfile getOwnedProfile(UUID accountId) {
+		getCandidateAccount(accountId);
+		return anonymousProfileRepository.findByCandidateId(accountId)
+				.orElseThrow(() -> new ProfileNotFoundException("me"));
 	}
 
 	private void applyProfileData(ProfileCreateRequest request, AnonymousProfile profile) {
@@ -130,5 +162,9 @@ public class CandidateProfileService {
 			String sanitized = textSanitizerService.sanitize(projectDescription);
 			profile.addProject(new CandidateProject(sanitized));
 		});
+	}
+
+	AnonymousProfile findProfileByPublicIdForInternalUse(String publicCandidateId) {
+		return findProfileByPublicId(publicCandidateId);
 	}
 }

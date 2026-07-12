@@ -1,10 +1,17 @@
 -- Reference schema for My Chance (PostgreSQL production target)
 -- Local development uses H2 with spring.jpa.hibernate.ddl-auto=update
 
-CREATE TABLE candidates (
+CREATE TABLE accounts (
     id UUID PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE
+    role VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE candidates (
+    id UUID PRIMARY KEY REFERENCES accounts(id)
 );
 
 CREATE TABLE anonymous_profiles (
@@ -39,7 +46,7 @@ CREATE TABLE candidate_experiences (
 CREATE TABLE job_vacancies (
     id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    recruiter_id UUID NOT NULL,
+    recruiter_id UUID NOT NULL REFERENCES accounts(id),
     description TEXT,
     max_salary INT CHECK (max_salary > 0)
 );
@@ -59,6 +66,8 @@ CREATE TABLE interview_invites (
     profile_id UUID NOT NULL REFERENCES anonymous_profiles(id),
     status VARCHAR(20) NOT NULL,
     message VARCHAR(500),
+    proposed_interview_at TIMESTAMP,
+    meeting_link VARCHAR(500),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

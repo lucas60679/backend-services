@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public record RecommendationResponse(
+		@JsonProperty("posicao") int posicao,
 		@JsonProperty("candidato_id") String candidatoId,
 		@JsonProperty("compatibilidade_score") double compatibilidadeScore,
 		@JsonProperty("compatibilidade") String compatibilidade,

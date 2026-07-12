@@ -1,10 +1,14 @@
 package com.mychance.backend_services.controller;
 
 import com.mychance.backend_services.dto.request.InviteCreateRequest;
+import com.mychance.backend_services.dto.request.ScheduleInterviewRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
+import com.mychance.backend_services.security.AuthenticatedUser;
 import com.mychance.backend_services.service.InterviewInviteService;
+import com.mychance.backend_services.service.JobVacancyService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,37 +25,63 @@ import java.util.UUID;
 public class InterviewInviteController {
 
 	private final InterviewInviteService interviewInviteService;
+	private final JobVacancyService jobVacancyService;
 
-	public InterviewInviteController(InterviewInviteService interviewInviteService) {
+	public InterviewInviteController(
+			InterviewInviteService interviewInviteService,
+			JobVacancyService jobVacancyService
+	) {
 		this.interviewInviteService = interviewInviteService;
+		this.jobVacancyService = jobVacancyService;
 	}
 
 	@PostMapping("/jobs/{jobId}/invites")
 	@ResponseStatus(HttpStatus.CREATED)
 	public InviteResponse sendInvite(
+			@AuthenticationPrincipal AuthenticatedUser user,
 			@PathVariable UUID jobId,
 			@Valid @RequestBody InviteCreateRequest request
 	) {
+		jobVacancyService.getOwnedJob(user.id(), jobId);
 		return interviewInviteService.sendInvite(jobId, request);
 	}
 
 	@PostMapping("/invites/{inviteId}/accept")
-	public InviteResponse acceptInvite(@PathVariable UUID inviteId) {
-		return interviewInviteService.acceptInvite(inviteId);
+	public InviteResponse acceptInvite(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID inviteId
+	) {
+		return interviewInviteService.acceptInvite(inviteId, user.id());
 	}
 
 	@PostMapping("/invites/{inviteId}/reject")
-	public InviteResponse rejectInvite(@PathVariable UUID inviteId) {
-		return interviewInviteService.rejectInvite(inviteId);
+	public InviteResponse rejectInvite(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID inviteId
+	) {
+		return interviewInviteService.rejectInvite(inviteId, user.id());
 	}
 
-	@GetMapping("/candidates/{candidatoId}/invites")
-	public List<InviteResponse> listCandidateInvites(@PathVariable String candidatoId) {
-		return interviewInviteService.listInvitesForCandidate(candidatoId);
+	@PostMapping("/invites/{inviteId}/schedule")
+	public InviteResponse scheduleInterview(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID inviteId,
+			@Valid @RequestBody ScheduleInterviewRequest request
+	) {
+		return interviewInviteService.scheduleInterview(inviteId, user.id(), request);
+	}
+
+	@GetMapping("/candidates/me/invites")
+	public List<InviteResponse> listMyInvites(@AuthenticationPrincipal AuthenticatedUser user) {
+		return interviewInviteService.listInvitesForAccount(user.id());
 	}
 
 	@GetMapping("/jobs/{jobId}/invites")
-	public List<InviteResponse> listJobInvites(@PathVariable UUID jobId) {
+	public List<InviteResponse> listJobInvites(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID jobId
+	) {
+		jobVacancyService.getOwnedJob(user.id(), jobId);
 		return interviewInviteService.listInvitesForJob(jobId);
 	}
 }

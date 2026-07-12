@@ -1,11 +1,14 @@
 package com.mychance.backend_services.controller;
 
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
+import com.mychance.backend_services.dto.response.MyProfileResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
+import com.mychance.backend_services.security.AuthenticatedUser;
 import com.mychance.backend_services.service.CandidateProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,15 +28,23 @@ public class CandidateProfileController {
 
 	@PostMapping("/profiles")
 	@ResponseStatus(HttpStatus.CREATED)
-	public ProfileCreateResponse createProfile(@Valid @RequestBody ProfileCreateRequest request) {
-		return candidateProfileService.createProfile(request);
-	}
-
-	@PutMapping("/profiles/{candidatoId}")
-	public ProfileCreateResponse updateProfile(
-			@PathVariable String candidatoId,
+	public ProfileCreateResponse createProfile(
+			@AuthenticationPrincipal AuthenticatedUser user,
 			@Valid @RequestBody ProfileCreateRequest request
 	) {
-		return candidateProfileService.updateProfile(candidatoId, request);
+		return candidateProfileService.createProfile(user.id(), request);
+	}
+
+	@PutMapping("/profiles/me")
+	public ProfileCreateResponse updateProfile(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@Valid @RequestBody ProfileCreateRequest request
+	) {
+		return candidateProfileService.updateProfile(user.id(), request);
+	}
+
+	@GetMapping("/me/profile")
+	public MyProfileResponse getMyProfile(@AuthenticationPrincipal AuthenticatedUser user) {
+		return candidateProfileService.getMyProfile(user.id());
 	}
 }
