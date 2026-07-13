@@ -84,4 +84,20 @@ public class JobVacancy {
 		requirements.add(requirement);
 		requirement.setJobVacancy(this);
 	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setMaxSalary(Integer maxSalary) {
+		this.maxSalary = maxSalary;
+	}
+
+	public void clearRequirements() {
+		requirements.clear();
+	}
 }

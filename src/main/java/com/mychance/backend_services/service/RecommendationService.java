@@ -1,12 +1,13 @@
 package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
+import com.mychance.backend_services.domain.entity.InterviewInvite;
 import com.mychance.backend_services.domain.entity.JobVacancy;
+import com.mychance.backend_services.domain.enums.InviteStatus;
 import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
 import com.mychance.backend_services.dto.response.ExperienceResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
-import com.mychance.backend_services.domain.enums.InviteStatus;
 import com.mychance.backend_services.exception.JobNotFoundException;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
 import com.mychance.backend_services.repository.InterviewInviteRepository;
@@ -52,10 +53,17 @@ public class RecommendationService {
 		JobVacancy jobVacancy = jobVacancyRepository.findByIdWithRequirements(jobId)
 				.orElseThrow(() -> new JobNotFoundException(jobId));
 
-		Set<String> invitedCandidateIds = interviewInviteRepository.findByJobId(jobId).stream()
-				.filter(invite -> invite.getStatus() == InviteStatus.ENVIADO
-						|| invite.getStatus() == InviteStatus.ACEITO)
-				.map(invite -> PublicIdFormatter.toPublicCandidateId(invite.getProfile().getId()))
+		Map<String, InviteStatus> inviteStatusByCandidate = interviewInviteRepository.findByJobId(jobId).stream()
+				.collect(Collectors.toMap(
+						invite -> PublicIdFormatter.toPublicCandidateId(invite.getProfile().getId()),
+						InterviewInvite::getStatus,
+						(existing, replacement) -> existing
+				));
+
+		Set<String> activeInviteCandidateIds = inviteStatusByCandidate.entrySet().stream()
+				.filter(entry -> entry.getValue() == InviteStatus.ENVIADO
+						|| entry.getValue() == InviteStatus.ACEITO)
+				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet());
 
 		List<AnonymousProfile> profiles = anonymousProfileRepository.findAll().stream()
@@ -78,9 +86,13 @@ public class RecommendationService {
 
 		List<RecommendationResponse> ranked = nlpResponse.ranking().stream()
 				.filter(ranking -> ranking.aprovadoFiltragem() && ranking.compatibilidadeScore() > 0.0)
-				.map(ranking -> toRecommendation(ranking, profilesByPublicId.get(ranking.candidatoId())))
+				.map(ranking -> toRecommendation(
+						ranking,
+						profilesByPublicId.get(ranking.candidatoId()),
+						inviteStatusByCandidate.get(ranking.candidatoId())
+				))
 				.filter(recommendation -> recommendation != null)
-				.filter(recommendation -> !invitedCandidateIds.contains(recommendation.candidatoId()))
+				.filter(recommendation -> !activeInviteCandidateIds.contains(recommendation.candidatoId()))
 				.sorted(Comparator.comparingDouble(RecommendationResponse::compatibilidadeScore).reversed())
 				.toList();
 
@@ -98,7 +110,8 @@ public class RecommendationService {
 				recommendation.compatibilidade(),
 				recommendation.competenciasTecnicas(),
 				recommendation.experiencias(),
-				recommendation.projetosDestaque()
+				recommendation.projetosDestaque(),
+				recommendation.conviteStatus()
 		);
 	}
 
@@ -117,7 +130,8 @@ public class RecommendationService {
 
 	private RecommendationResponse toRecommendation(
 			MatchingRankResponse.RankedCandidatePayload ranking,
-			AnonymousProfile profile
+			AnonymousProfile profile,
+			InviteStatus inviteStatus
 	) {
 		if (profile == null) {
 			return null;
@@ -136,6 +150,8 @@ public class RecommendationService {
 				.map(project -> project.getDescription())
 				.toList();
 
+		String conviteStatus = inviteStatus == InviteStatus.RECUSADO ? InviteStatus.RECUSADO.name() : null;
+
 		return new RecommendationResponse(
 				0,
 				ranking.candidatoId(),
@@ -143,7 +159,8 @@ public class RecommendationService {
 				ranking.compatibilidade(),
 				competencias,
 				experiencias,
-				projetos
+				projetos,
+				conviteStatus
 		);
 	}
 }

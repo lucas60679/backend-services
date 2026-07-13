@@ -68,6 +68,7 @@ CREATE TABLE interview_invites (
     message VARCHAR(500),
     proposed_interview_at TIMESTAMP,
     meeting_link VARCHAR(500),
+    schedule_status VARCHAR(30),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

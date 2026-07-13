@@ -3,7 +3,10 @@ package com.mychance.backend_services.service;
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.dto.request.ExperienceRequest;
+import com.mychance.backend_services.dto.request.InviteCreateRequest;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
+import com.mychance.backend_services.dto.response.InviteResponse;
+import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
 import com.mychance.backend_services.exception.JobNotFoundException;
 import com.mychance.backend_services.repository.AccountRepository;
@@ -39,6 +42,9 @@ class RecommendationServiceIntegrationTest {
 
 	@Autowired
 	private AccountRepository accountRepository;
+
+	@Autowired
+	private InterviewInviteService interviewInviteService;
 
 	private int profileCounter;
 
@@ -100,6 +106,41 @@ class RecommendationServiceIntegrationTest {
 		assertThat(recommendation.competenciasTecnicas())
 				.contains("Python", "SQL")
 				.doesNotContain("Power BI");
+	}
+
+	@Test
+	void includesRejectedCandidatesWithInviteStatusFlag() {
+		JobVacancy job = jobVacancyRepository.findAll().get(0);
+		Account account = accountRepository.save(
+				AccountTestBuilder.candidateAccount("recommendation-rejected@test.local")
+		);
+		ProfileCreateResponse profile = candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
+				Map.of("python", 5, "sql", 5),
+				List.of(new ExperienceRequest("Desenvolvedor", 24)),
+				List.of("Projeto relevante para a vaga."),
+				null,
+				null,
+				5000
+		));
+
+		InviteResponse sent = interviewInviteService.sendInvite(
+				job.getId(),
+				new InviteCreateRequest(profile.candidatoId(), "Proposta inicial")
+		);
+		interviewInviteService.rejectInvite(sent.conviteId(), account.getId());
+
+		List<RecommendationResponse> recommendations = recommendationService.getRecommendations(job.getId());
+
+		assertThat(recommendations)
+				.extracting(RecommendationResponse::candidatoId)
+				.contains(profile.candidatoId());
+
+		RecommendationResponse rejected = recommendations.stream()
+				.filter(recommendation -> recommendation.candidatoId().equals(profile.candidatoId()))
+				.findFirst()
+				.orElseThrow();
+
+		assertThat(rejected.conviteStatus()).isEqualTo("RECUSADO");
 	}
 
 	private void createProfile(Map<String, Integer> skills, int experienceMonths) {

@@ -1,6 +1,7 @@
 package com.mychance.backend_services.domain.entity;
 
 import com.mychance.backend_services.domain.enums.InviteStatus;
+import com.mychance.backend_services.domain.enums.ScheduleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,6 +44,10 @@ public class InterviewInvite {
 
 	@Column(name = "meeting_link", length = 500)
 	private String meetingLink;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "schedule_status", length = 30)
+	private ScheduleStatus scheduleStatus;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
@@ -113,6 +118,14 @@ public class InterviewInvite {
 
 	public void setMeetingLink(String meetingLink) {
 		this.meetingLink = meetingLink;
+	}
+
+	public ScheduleStatus getScheduleStatus() {
+		return scheduleStatus;
+	}
+
+	public void setScheduleStatus(ScheduleStatus scheduleStatus) {
+		this.scheduleStatus = scheduleStatus;
 	}
 
 	public Instant getCreatedAt() {

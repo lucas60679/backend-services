@@ -10,6 +10,7 @@ import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidInviteTransitionException;
+import com.mychance.backend_services.exception.InvitePreviouslyRejectedException;
 import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.InterviewInviteRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
@@ -109,6 +110,24 @@ class InterviewInviteServiceIntegrationTest {
 		UUID inviteId = sent.conviteId();
 		assertThatThrownBy(() -> interviewInviteService.acceptInvite(inviteId, account.getId()))
 				.isInstanceOf(InvalidInviteTransitionException.class);
+	}
+
+	@Test
+	void blocksResendAfterReject() {
+		JobVacancy job = jobVacancyRepository.findAll().get(0);
+		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("invite-5@test.local"));
+		ProfileCreateResponse profile = createProfile(account, "invite-5@test.local");
+
+		InviteResponse sent = interviewInviteService.sendInvite(
+				job.getId(),
+				new InviteCreateRequest(profile.candidatoId(), "Proposta")
+		);
+		interviewInviteService.rejectInvite(sent.conviteId(), account.getId());
+
+		assertThatThrownBy(() -> interviewInviteService.sendInvite(
+				job.getId(),
+				new InviteCreateRequest(profile.candidatoId(), "Nova proposta")
+		)).isInstanceOf(InvitePreviouslyRejectedException.class);
 	}
 
 	private ProfileCreateResponse createProfile(Account account, String ignoredEmail) {

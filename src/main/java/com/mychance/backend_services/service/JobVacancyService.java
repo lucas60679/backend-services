@@ -6,6 +6,8 @@ import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.dto.request.JobCreateRequest;
 import com.mychance.backend_services.dto.request.JobRequirementRequest;
 import com.mychance.backend_services.dto.response.JobCreateResponse;
+import com.mychance.backend_services.dto.response.JobDetailResponse;
+import com.mychance.backend_services.dto.response.JobRequirementDetailResponse;
 import com.mychance.backend_services.dto.response.JobSummaryResponse;
 import com.mychance.backend_services.exception.InvalidSkillException;
 import com.mychance.backend_services.exception.JobNotFoundException;
@@ -70,5 +72,54 @@ public class JobVacancyService {
 		return jobVacancyRepository.findByRecruiterIdOrderByTitleAsc(recruiterId).stream()
 				.map(job -> new JobSummaryResponse(job.getId(), job.getTitle()))
 				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public JobDetailResponse getOwnedJobDetail(UUID recruiterId, UUID jobId) {
+		JobVacancy jobVacancy = getOwnedJob(recruiterId, jobId);
+		return toDetailResponse(jobVacancy);
+	}
+
+	@Transactional
+	public JobCreateResponse updateJob(UUID recruiterId, UUID jobId, JobCreateRequest request) {
+		JobVacancy jobVacancy = getOwnedJob(recruiterId, jobId);
+		jobVacancy.setTitle(request.titulo());
+		jobVacancy.setDescription(request.descricao());
+		jobVacancy.setMaxSalary(request.salarioMaximo());
+		jobVacancy.clearRequirements();
+
+		for (JobRequirementRequest requirement : request.requisitos()) {
+			if (!SkillName.isValidKey(requirement.competencia())) {
+				throw new InvalidSkillException(requirement.competencia());
+			}
+			jobVacancy.addRequirement(new JobRequirement(
+					SkillName.fromKey(requirement.competencia()),
+					requirement.peso(),
+					requirement.obrigatoria(),
+					requirement.nivelMin()
+			));
+		}
+
+		JobVacancy saved = jobVacancyRepository.save(jobVacancy);
+		return new JobCreateResponse(saved.getId(), "Vaga atualizada com sucesso");
+	}
+
+	private JobDetailResponse toDetailResponse(JobVacancy jobVacancy) {
+		List<JobRequirementDetailResponse> requisitos = jobVacancy.getRequirements().stream()
+				.map(req -> new JobRequirementDetailResponse(
+						req.getSkillName().getKey(),
+						req.getWeight(),
+						req.isMandatory(),
+						req.getMinLevel()
+				))
+				.toList();
+
+		return new JobDetailResponse(
+				jobVacancy.getId(),
+				jobVacancy.getTitle(),
+				jobVacancy.getDescription(),
+				jobVacancy.getMaxSalary(),
+				requisitos
+		);
 	}
 }

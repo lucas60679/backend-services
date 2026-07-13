@@ -1,5 +1,6 @@
 package com.mychance.backend_services.controller;
 
+import com.mychance.backend_services.domain.enums.UserRole;
 import com.mychance.backend_services.dto.request.InviteCreateRequest;
 import com.mychance.backend_services.dto.request.ScheduleInterviewRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
@@ -69,6 +70,26 @@ public class InterviewInviteController {
 			@Valid @RequestBody ScheduleInterviewRequest request
 	) {
 		return interviewInviteService.scheduleInterview(inviteId, user.id(), request);
+	}
+
+	@PostMapping("/invites/{inviteId}/schedule/confirm")
+	public InviteResponse confirmSchedule(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID inviteId
+	) {
+		if (user.role() == UserRole.RECRUITER) {
+			return interviewInviteService.confirmScheduleByRecruiter(inviteId, user.id());
+		}
+		return interviewInviteService.confirmScheduleByCandidate(inviteId, user.id());
+	}
+
+	@PostMapping("/invites/{inviteId}/schedule/counter-propose")
+	public InviteResponse counterProposeSchedule(
+			@AuthenticationPrincipal AuthenticatedUser user,
+			@PathVariable UUID inviteId,
+			@Valid @RequestBody ScheduleInterviewRequest request
+	) {
+		return interviewInviteService.counterProposeSchedule(inviteId, user.id(), request);
 	}
 
 	@GetMapping("/candidates/me/invites")

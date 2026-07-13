@@ -11,6 +11,7 @@ import com.mychance.backend_services.domain.enums.EducationLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.domain.enums.UserRole;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
+import com.mychance.backend_services.dto.response.ExperienceResponse;
 import com.mychance.backend_services.dto.response.MyProfileResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidEducationLevelException;
@@ -26,6 +27,8 @@ import com.mychance.backend_services.util.PublicIdFormatter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -90,9 +93,31 @@ public class CandidateProfileService {
 	@Transactional(readOnly = true)
 	public MyProfileResponse getMyProfile(UUID accountId) {
 		AnonymousProfile profile = getOwnedProfile(accountId);
+		profile.getSkills().size();
+		profile.getExperiences().size();
+		profile.getProjects().size();
+
+		Map<String, Integer> competencias = new LinkedHashMap<>();
+		profile.getSkills().forEach(skill ->
+				competencias.put(skill.getSkillName().getKey(), skill.getSkillLevel())
+		);
+
+		List<ExperienceResponse> experiencias = profile.getExperiences().stream()
+				.map(exp -> new ExperienceResponse(exp.getRoleTitle(), exp.getDurationMonths()))
+				.toList();
+
+		List<String> projetos = profile.getProjects().stream()
+				.map(CandidateProject::getDescription)
+				.toList();
+
 		return new MyProfileResponse(
 				PublicIdFormatter.toPublicCandidateId(profile.getId()),
-				"Perfil encontrado"
+				competencias,
+				experiencias,
+				projetos,
+				profile.getEducationLevel() != null ? profile.getEducationLevel().getKey() : null,
+				profile.getRegionState() != null ? profile.getRegionState().getKey() : null,
+				profile.getSalaryExpectationMin()
 		);
 	}
 

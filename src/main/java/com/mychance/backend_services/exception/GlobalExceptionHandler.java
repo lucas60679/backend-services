@@ -112,6 +112,13 @@ public class GlobalExceptionHandler {
 		return problem;
 	}
 
+	@ExceptionHandler(InvitePreviouslyRejectedException.class)
+	public ProblemDetail handleInvitePreviouslyRejected(InvitePreviouslyRejectedException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+		problem.setTitle("Invite previously rejected");
+		return problem;
+	}
+
 	@ExceptionHandler(DuplicateInviteException.class)
 	public ProblemDetail handleDuplicateInvite(DuplicateInviteException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
