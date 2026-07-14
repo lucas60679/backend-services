@@ -2,9 +2,7 @@ package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobVacancy;
-import com.mychance.backend_services.dto.request.ExperienceRequest;
 import com.mychance.backend_services.dto.request.InviteCreateRequest;
-import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
@@ -12,6 +10,7 @@ import com.mychance.backend_services.exception.JobNotFoundException;
 import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
 import com.mychance.backend_services.support.AccountTestBuilder;
+import com.mychance.backend_services.support.ProfileRequestTestBuilder;
 import com.mychance.backend_services.support.TestNlpMatchingConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,14 +113,13 @@ class RecommendationServiceIntegrationTest {
 		Account account = accountRepository.save(
 				AccountTestBuilder.candidateAccount("recommendation-rejected@test.local")
 		);
-		ProfileCreateResponse profile = candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Desenvolvedor", 24)),
-				List.of("Projeto relevante para a vaga."),
-				null,
-				null,
-				5000
-		));
+		ProfileCreateResponse profile = candidateProfileService.createProfile(
+				account.getId(),
+				ProfileRequestTestBuilder.basicProfile(
+						Map.of("python", 5, "sql", 5),
+						List.of(ProfileRequestTestBuilder.currentExperience("Desenvolvedor", "pleno", 24))
+				)
+		);
 
 		InviteResponse sent = interviewInviteService.sendInvite(
 				job.getId(),
@@ -148,13 +146,12 @@ class RecommendationServiceIntegrationTest {
 		Account account = accountRepository.save(
 				AccountTestBuilder.candidateAccount("recommendation-" + profileCounter + "@test.local")
 		);
-		candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
-				skills,
-				List.of(new ExperienceRequest("Desenvolvedor", experienceMonths)),
-				List.of("Projeto relevante para a vaga."),
-				null,
-				null,
-				5000
-		));
+		candidateProfileService.createProfile(
+				account.getId(),
+				ProfileRequestTestBuilder.basicProfile(
+						skills,
+						List.of(ProfileRequestTestBuilder.currentExperience("Desenvolvedor", "pleno", experienceMonths))
+				)
+		);
 	}
 }

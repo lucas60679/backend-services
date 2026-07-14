@@ -14,8 +14,8 @@ Lista completa: enum `SkillName` em `backend-services`.
 
 | Campo | Valores permitidos |
 |-------|-------------------|
-| `nivel_escolaridade` | `graduacao_concluida`, `pos_graduacao_andamento`, `pos_graduacao_concluida`, `tecnico` |
-| `regiao` | `norte`, `nordeste`, `centro_oeste`, `sudeste`, `sul` |
+| `nivel_escolaridade` | `ensino_medio_completo`, `tecnico`, `graduacao_andamento`, `graduacao_concluida`, `pos_graduacao_andamento`, `pos_graduacao_concluida` |
+| `estado` | UF (`ac`…`to`), ex.: `pb`, `sp` |
 
 ## Salário (dois campos distintos)
 
@@ -35,10 +35,10 @@ Regra de matching: candidatos com `pretensao_salarial_minima > salario_maximo` s
 ```json
 {
   "competencias": { "python": 4, "sql": 5 },
-  "experiencias": [{ "cargo": "Desenvolvedor Backend Júnior", "tempo_meses": 14 }],
+  "experiencias": [{ "cargo": "Desenvolvedor Backend", "senioridade": "junior", "inicio_mes": 1, "inicio_ano": 2024, "atual": true }],
   "projetos_destaque": ["Descrição limitada a tecnologias, sem links ou e-mails."],
   "nivel_escolaridade": "graduacao_concluida",
-  "regiao": "nordeste",
+  "estado": "pb",
   "pretensao_salarial_minima": 6500
 }
 ```

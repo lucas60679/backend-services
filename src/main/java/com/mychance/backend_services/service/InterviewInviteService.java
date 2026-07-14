@@ -249,6 +249,7 @@ public class InterviewInviteService {
 	private InviteResponse toResponse(InterviewInvite invite, InviteAudience audience) {
 		String candidatoNome = null;
 		String candidatoEmail = null;
+		String candidatoTelefone = null;
 		String recruiterNome = null;
 		String recruiterEmail = null;
 
@@ -256,6 +257,7 @@ public class InterviewInviteService {
 			if (audience == InviteAudience.RECRUITER) {
 				candidatoNome = invite.getProfile().getCandidate().getFullName();
 				candidatoEmail = invite.getProfile().getCandidate().getEmail();
+				candidatoTelefone = invite.getProfile().getCandidate().getPhone();
 			} else {
 				Account recruiter = accountRepository.findById(invite.getJobVacancy().getRecruiterId())
 						.orElse(null);
@@ -280,6 +282,7 @@ public class InterviewInviteService {
 				invite.getJobVacancy().getDescription(),
 				candidatoNome,
 				candidatoEmail,
+				candidatoTelefone,
 				recruiterNome,
 				recruiterEmail,
 				invite.getProposedInterviewAt(),

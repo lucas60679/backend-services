@@ -4,18 +4,27 @@ import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.Candidate;
 import com.mychance.backend_services.domain.entity.CandidateExperience;
+import com.mychance.backend_services.domain.entity.CandidateLanguage;
 import com.mychance.backend_services.domain.entity.CandidateProject;
 import com.mychance.backend_services.domain.entity.CandidateSkill;
-import com.mychance.backend_services.domain.enums.BrazilianRegion;
+import com.mychance.backend_services.domain.enums.BrazilianState;
 import com.mychance.backend_services.domain.enums.EducationLevel;
+import com.mychance.backend_services.domain.enums.EmploymentType;
+import com.mychance.backend_services.domain.enums.LanguageLevel;
+import com.mychance.backend_services.domain.enums.LanguageName;
+import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.domain.enums.UserRole;
+import com.mychance.backend_services.domain.enums.WorkModality;
+import com.mychance.backend_services.dto.request.ExperienceRequest;
+import com.mychance.backend_services.dto.request.LanguageProficiencyRequest;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.ExperienceResponse;
+import com.mychance.backend_services.dto.response.LanguageProficiencyResponse;
 import com.mychance.backend_services.dto.response.MyProfileResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidEducationLevelException;
-import com.mychance.backend_services.exception.InvalidRegionException;
+import com.mychance.backend_services.exception.InvalidStateException;
 import com.mychance.backend_services.exception.InvalidSkillException;
 import com.mychance.backend_services.exception.ProfileAlreadyExistsException;
 import com.mychance.backend_services.exception.ProfileNotFoundException;
@@ -28,8 +37,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -76,9 +87,11 @@ public class CandidateProfileService {
 	@Transactional
 	public ProfileCreateResponse updateProfile(UUID accountId, ProfileCreateRequest request) {
 		AnonymousProfile profile = getOwnedProfile(accountId);
+		initializeProfileDetails(profile);
 		profile.getSkills().clear();
 		profile.getExperiences().clear();
 		profile.getProjects().clear();
+		profile.getLanguages().clear();
 		applyProfileData(request, profile);
 
 		AnonymousProfile saved = anonymousProfileRepository.save(profile);
@@ -93,9 +106,7 @@ public class CandidateProfileService {
 	@Transactional(readOnly = true)
 	public MyProfileResponse getMyProfile(UUID accountId) {
 		AnonymousProfile profile = getOwnedProfile(accountId);
-		profile.getSkills().size();
-		profile.getExperiences().size();
-		profile.getProjects().size();
+		initializeProfileDetails(profile);
 
 		Map<String, Integer> competencias = new LinkedHashMap<>();
 		profile.getSkills().forEach(skill ->
@@ -103,11 +114,28 @@ public class CandidateProfileService {
 		);
 
 		List<ExperienceResponse> experiencias = profile.getExperiences().stream()
-				.map(exp -> new ExperienceResponse(exp.getRoleTitle(), exp.getDurationMonths()))
+				.map(this::toExperienceResponse)
 				.toList();
 
 		List<String> projetos = profile.getProjects().stream()
 				.map(CandidateProject::getDescription)
+				.toList();
+
+		List<String> modalidades = profile.getPreferredModalities().stream()
+				.map(WorkModality::getKey)
+				.sorted()
+				.toList();
+
+		List<String> vinculos = profile.getPreferredEmploymentTypes().stream()
+				.map(EmploymentType::getKey)
+				.sorted()
+				.toList();
+
+		List<LanguageProficiencyResponse> idiomas = profile.getLanguages().stream()
+				.map(language -> new LanguageProficiencyResponse(
+						language.getLanguageName().getKey(),
+						language.getLanguageLevel().getKey()
+				))
 				.toList();
 
 		return new MyProfileResponse(
@@ -117,7 +145,11 @@ public class CandidateProfileService {
 				projetos,
 				profile.getEducationLevel() != null ? profile.getEducationLevel().getKey() : null,
 				profile.getRegionState() != null ? profile.getRegionState().getKey() : null,
-				profile.getSalaryExpectationMin()
+				profile.getStudyArea(),
+				profile.getSalaryExpectationMin(),
+				modalidades,
+				vinculos,
+				idiomas
 		);
 	}
 
@@ -140,8 +172,11 @@ public class CandidateProfileService {
 		mapSkills(request.competencias(), profile);
 		mapExperiences(request, profile);
 		mapProjects(request, profile);
+		mapLanguages(request.idiomas(), profile);
 		mapAnonymizedMetadata(request, profile);
 		profile.setSalaryExpectationMin(request.pretensaoSalarialMinima());
+		profile.setPreferredModalities(parseModalities(request.modalidadesPreferidas()));
+		profile.setPreferredEmploymentTypes(parseEmploymentTypes(request.vinculosPreferidos()));
 	}
 
 	private void mapAnonymizedMetadata(ProfileCreateRequest request, AnonymousProfile profile) {
@@ -152,11 +187,19 @@ public class CandidateProfileService {
 			profile.setEducationLevel(EducationLevel.fromKey(request.nivelEscolaridade()));
 		}
 
-		if (request.regiao() != null && !request.regiao().isBlank()) {
-			if (!BrazilianRegion.isValidKey(request.regiao())) {
-				throw new InvalidRegionException(request.regiao());
+		if (request.estado() != null && !request.estado().isBlank()) {
+			if (!BrazilianState.isValidKey(request.estado())) {
+				throw new InvalidStateException(request.estado());
 			}
-			profile.setRegionState(BrazilianRegion.fromKey(request.regiao()));
+			profile.setRegionState(BrazilianState.fromKey(request.estado()));
+		} else {
+			profile.setRegionState(null);
+		}
+
+		if (request.cursoArea() != null && !request.cursoArea().isBlank()) {
+			profile.setStudyArea(request.cursoArea().trim());
+		} else {
+			profile.setStudyArea(null);
 		}
 	}
 
@@ -177,8 +220,29 @@ public class CandidateProfileService {
 	}
 
 	private void mapExperiences(ProfileCreateRequest request, AnonymousProfile profile) {
-		request.experiencias().forEach(experience ->
-				profile.addExperience(new CandidateExperience(experience.cargo(), experience.tempoMeses()))
+		request.experiencias().forEach(experience -> profile.addExperience(toExperienceEntity(experience)));
+	}
+
+	private CandidateExperience toExperienceEntity(ExperienceRequest experience) {
+		if (!SeniorityLevel.isValidKey(experience.senioridade())) {
+			throw new IllegalArgumentException("Senioridade inválida: " + experience.senioridade());
+		}
+
+		boolean current = Boolean.TRUE.equals(experience.atual());
+		Integer endMonth = current ? null : experience.fimMes();
+		Integer endYear = current ? null : experience.fimAno();
+		if (!current && (endMonth == null || endYear == null)) {
+			throw new IllegalArgumentException("Informe mês/ano de fim ou marque a experiência como atual.");
+		}
+
+		return new CandidateExperience(
+				experience.cargo(),
+				SeniorityLevel.fromKey(experience.senioridade()),
+				experience.inicioMes(),
+				experience.inicioAno(),
+				endMonth,
+				endYear,
+				current
 		);
 	}
 
@@ -187,6 +251,65 @@ public class CandidateProfileService {
 			String sanitized = textSanitizerService.sanitize(projectDescription);
 			profile.addProject(new CandidateProject(sanitized));
 		});
+	}
+
+	private void mapLanguages(List<LanguageProficiencyRequest> idiomas, AnonymousProfile profile) {
+		for (LanguageProficiencyRequest idioma : idiomas) {
+			if (!LanguageName.isValidKey(idioma.idioma())) {
+				throw new IllegalArgumentException("Idioma inválido: " + idioma.idioma());
+			}
+			if (!LanguageLevel.isValidKey(idioma.nivel())) {
+				throw new IllegalArgumentException("Nível de idioma inválido: " + idioma.nivel());
+			}
+			profile.addLanguage(new CandidateLanguage(
+					LanguageName.fromKey(idioma.idioma()),
+					LanguageLevel.fromKey(idioma.nivel())
+			));
+		}
+	}
+
+	private Set<WorkModality> parseModalities(List<String> values) {
+		Set<WorkModality> modalities = new LinkedHashSet<>();
+		for (String value : values) {
+			if (!WorkModality.isValidKey(value)) {
+				throw new IllegalArgumentException("Modalidade inválida: " + value);
+			}
+			modalities.add(WorkModality.fromKey(value));
+		}
+		return modalities;
+	}
+
+	private Set<EmploymentType> parseEmploymentTypes(List<String> values) {
+		Set<EmploymentType> types = new LinkedHashSet<>();
+		for (String value : values) {
+			if (!EmploymentType.isValidKey(value)) {
+				throw new IllegalArgumentException("Tipo de vínculo inválido: " + value);
+			}
+			types.add(EmploymentType.fromKey(value));
+		}
+		return types;
+	}
+
+	private ExperienceResponse toExperienceResponse(CandidateExperience experience) {
+		return new ExperienceResponse(
+				experience.getRoleTitle(),
+				experience.getSeniorityLevel().getKey(),
+				experience.getStartMonth(),
+				experience.getStartYear(),
+				experience.getEndMonth(),
+				experience.getEndYear(),
+				experience.isCurrent(),
+				experience.getDurationMonths()
+		);
+	}
+
+	private void initializeProfileDetails(AnonymousProfile profile) {
+		profile.getSkills().size();
+		profile.getProjects().size();
+		profile.getExperiences().size();
+		profile.getLanguages().size();
+		profile.getPreferredModalities().size();
+		profile.getPreferredEmploymentTypes().size();
 	}
 
 	AnonymousProfile findProfileByPublicIdForInternalUse(String publicCandidateId) {

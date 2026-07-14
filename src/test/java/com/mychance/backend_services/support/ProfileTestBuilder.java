@@ -6,6 +6,7 @@ import com.mychance.backend_services.domain.entity.Candidate;
 import com.mychance.backend_services.domain.entity.CandidateExperience;
 import com.mychance.backend_services.domain.entity.CandidateProject;
 import com.mychance.backend_services.domain.entity.CandidateSkill;
+import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 
 public final class ProfileTestBuilder {
@@ -28,8 +29,18 @@ public final class ProfileTestBuilder {
 
 	public static AnonymousProfile withExperienceMonths(int... months) {
 		AnonymousProfile profile = anonymousProfile();
+		java.time.YearMonth end = java.time.YearMonth.now();
 		for (int monthCount : months) {
-			profile.addExperience(new CandidateExperience("Cargo Teste", monthCount));
+			java.time.YearMonth start = end.minusMonths(Math.max(1, monthCount) - 1L);
+			profile.addExperience(new CandidateExperience(
+					"Cargo Teste",
+					SeniorityLevel.PLENO,
+					start.getMonthValue(),
+					start.getYear(),
+					end.getMonthValue(),
+					end.getYear(),
+					false
+			));
 		}
 		return profile;
 	}

@@ -3,8 +3,11 @@ package com.mychance.backend_services.config;
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobRequirement;
 import com.mychance.backend_services.domain.entity.JobVacancy;
+import com.mychance.backend_services.domain.enums.EmploymentType;
+import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.domain.enums.UserRole;
+import com.mychance.backend_services.domain.enums.WorkModality;
 import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -46,6 +49,12 @@ public class TestDataLoader {
 					"Desenvolvedor Backend Python",
 					TEST_RECRUITER_ID,
 					"Vaga de teste de integração.",
+					"MyChance Test Labs",
+					WorkModality.REMOTO,
+					EmploymentType.CLT,
+					null,
+					SeniorityLevel.PLENO,
+					8000,
 					12000
 			);
 			vacancy.addRequirement(new JobRequirement(SkillName.PYTHON, 5, true, 3));

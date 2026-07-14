@@ -28,6 +28,9 @@ public class Account {
 	@Column(name = "full_name", nullable = false, length = 255)
 	private String fullName;
 
+	@Column(name = "phone", length = 30)
+	private String phone;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private UserRole role;
@@ -45,9 +48,27 @@ public class Account {
 		this.role = role;
 	}
 
+	public Account(String fullName, String email, String passwordHash, UserRole role, String phone) {
+		this(fullName, email, passwordHash, role);
+		this.phone = phone;
+	}
+
 	public static Account withId(UUID id, String fullName, String email, String passwordHash, UserRole role) {
 		Account account = new Account(fullName, email, passwordHash, role);
 		account.id = id;
+		return account;
+	}
+
+	public static Account withId(
+			UUID id,
+			String fullName,
+			String email,
+			String passwordHash,
+			UserRole role,
+			String phone
+	) {
+		Account account = withId(id, fullName, email, passwordHash, role);
+		account.phone = phone;
 		return account;
 	}
 
@@ -75,6 +96,14 @@ public class Account {
 
 	public String getFullName() {
 		return fullName;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
 	}
 
 	public UserRole getRole() {

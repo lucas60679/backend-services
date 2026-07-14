@@ -9,7 +9,14 @@ public record JobDetailResponse(
 		@JsonProperty("vaga_id") UUID vagaId,
 		@JsonProperty("titulo") String titulo,
 		@JsonProperty("descricao") String descricao,
+		@JsonProperty("empresa_instituicao") String empresaInstituicao,
+		@JsonProperty("modalidade") String modalidade,
+		@JsonProperty("tipo_vinculo") String tipoVinculo,
+		@JsonProperty("local") String local,
+		@JsonProperty("senioridade") String senioridade,
+		@JsonProperty("salario_minimo") Integer salarioMinimo,
 		@JsonProperty("salario_maximo") Integer salarioMaximo,
-		@JsonProperty("requisitos") List<JobRequirementDetailResponse> requisitos
+		@JsonProperty("requisitos") List<JobRequirementDetailResponse> requisitos,
+		@JsonProperty("idiomas") List<JobLanguageRequirementDetailResponse> idiomas
 ) {
 }

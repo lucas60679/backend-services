@@ -47,6 +47,10 @@ public class Candidate {
 		return account.getEmail();
 	}
 
+	public String getPhone() {
+		return account.getPhone();
+	}
+
 	public AnonymousProfile getAnonymousProfile() {
 		return anonymousProfile;
 	}

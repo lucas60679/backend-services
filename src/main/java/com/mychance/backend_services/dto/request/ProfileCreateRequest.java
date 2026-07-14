@@ -17,7 +17,11 @@ public record ProfileCreateRequest(
 		@NotNull @Valid @JsonProperty("experiencias") List<ExperienceRequest> experiencias,
 		@NotNull @Valid @JsonProperty("projetos_destaque") List<@NotBlank @Size(max = 250) String> projetosDestaque,
 		@JsonProperty("nivel_escolaridade") String nivelEscolaridade,
-		@JsonProperty("regiao") String regiao,
-		@NotNull @Min(1) @JsonProperty("pretensao_salarial_minima") Integer pretensaoSalarialMinima
+		@JsonProperty("estado") String estado,
+		@Size(max = 150) @JsonProperty("curso_area") String cursoArea,
+		@NotNull @Min(1000) @JsonProperty("pretensao_salarial_minima") Integer pretensaoSalarialMinima,
+		@NotEmpty @JsonProperty("modalidades_preferidas") List<@NotBlank String> modalidadesPreferidas,
+		@NotEmpty @JsonProperty("vinculos_preferidos") List<@NotBlank String> vinculosPreferidos,
+		@NotNull @Valid @JsonProperty("idiomas") List<LanguageProficiencyRequest> idiomas
 ) {
 }

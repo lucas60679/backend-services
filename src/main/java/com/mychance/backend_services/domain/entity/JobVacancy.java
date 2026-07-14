@@ -1,8 +1,13 @@
 package com.mychance.backend_services.domain.entity;
 
+import com.mychance.backend_services.domain.enums.EmploymentType;
+import com.mychance.backend_services.domain.enums.SeniorityLevel;
+import com.mychance.backend_services.domain.enums.WorkModality;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
@@ -28,11 +33,35 @@ public class JobVacancy {
 	@Column(name = "description", columnDefinition = "TEXT")
 	private String description;
 
+	@Column(name = "company_name", nullable = false, length = 255)
+	private String companyName;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "work_modality", nullable = false, length = 30)
+	private WorkModality workModality;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "employment_type", nullable = false, length = 30)
+	private EmploymentType employmentType;
+
+	@Column(name = "location", length = 150)
+	private String location;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "seniority_level", nullable = false, length = 50)
+	private SeniorityLevel seniorityLevel;
+
+	@Column(name = "min_salary")
+	private Integer minSalary;
+
 	@Column(name = "max_salary")
 	private Integer maxSalary;
 
 	@OneToMany(mappedBy = "jobVacancy", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<JobRequirement> requirements = new ArrayList<>();
+
+	@OneToMany(mappedBy = "jobVacancy", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<JobLanguageRequirement> languageRequirements = new ArrayList<>();
 
 	protected JobVacancy() {
 	}
@@ -42,10 +71,27 @@ public class JobVacancy {
 		this.recruiterId = recruiterId;
 	}
 
-	public JobVacancy(String title, UUID recruiterId, String description, Integer maxSalary) {
+	public JobVacancy(
+			String title,
+			UUID recruiterId,
+			String description,
+			String companyName,
+			WorkModality workModality,
+			EmploymentType employmentType,
+			String location,
+			SeniorityLevel seniorityLevel,
+			Integer minSalary,
+			Integer maxSalary
+	) {
 		this.title = title;
 		this.recruiterId = recruiterId;
 		this.description = description;
+		this.companyName = companyName;
+		this.workModality = workModality;
+		this.employmentType = employmentType;
+		this.location = location;
+		this.seniorityLevel = seniorityLevel;
+		this.minSalary = minSalary;
 		this.maxSalary = maxSalary;
 	}
 
@@ -72,6 +118,30 @@ public class JobVacancy {
 		return description;
 	}
 
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public WorkModality getWorkModality() {
+		return workModality;
+	}
+
+	public EmploymentType getEmploymentType() {
+		return employmentType;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public SeniorityLevel getSeniorityLevel() {
+		return seniorityLevel;
+	}
+
+	public Integer getMinSalary() {
+		return minSalary;
+	}
+
 	public Integer getMaxSalary() {
 		return maxSalary;
 	}
@@ -80,8 +150,17 @@ public class JobVacancy {
 		return requirements;
 	}
 
+	public List<JobLanguageRequirement> getLanguageRequirements() {
+		return languageRequirements;
+	}
+
 	public void addRequirement(JobRequirement requirement) {
 		requirements.add(requirement);
+		requirement.setJobVacancy(this);
+	}
+
+	public void addLanguageRequirement(JobLanguageRequirement requirement) {
+		languageRequirements.add(requirement);
 		requirement.setJobVacancy(this);
 	}
 
@@ -93,11 +172,39 @@ public class JobVacancy {
 		this.description = description;
 	}
 
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+
+	public void setWorkModality(WorkModality workModality) {
+		this.workModality = workModality;
+	}
+
+	public void setEmploymentType(EmploymentType employmentType) {
+		this.employmentType = employmentType;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
+	public void setSeniorityLevel(SeniorityLevel seniorityLevel) {
+		this.seniorityLevel = seniorityLevel;
+	}
+
+	public void setMinSalary(Integer minSalary) {
+		this.minSalary = minSalary;
+	}
+
 	public void setMaxSalary(Integer maxSalary) {
 		this.maxSalary = maxSalary;
 	}
 
 	public void clearRequirements() {
 		requirements.clear();
+	}
+
+	public void clearLanguageRequirements() {
+		languageRequirements.clear();
 	}
 }

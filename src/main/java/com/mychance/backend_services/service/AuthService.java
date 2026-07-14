@@ -11,6 +11,7 @@ import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
 import com.mychance.backend_services.security.AuthenticatedUser;
 import com.mychance.backend_services.security.JwtService;
+import com.mychance.backend_services.util.ContactNormalizer;
 import com.mychance.backend_services.util.PublicIdFormatter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,15 +46,30 @@ public class AuthService {
 		}
 
 		UserRole role = UserRole.fromKey(request.role());
-		if (accountRepository.existsByEmailIgnoreCase(request.email())) {
-			throw new EmailAlreadyRegisteredException(request.email());
+
+		String email = ContactNormalizer.normalizeEmail(request.email());
+		if (!ContactNormalizer.isValidEmail(email)) {
+			throw new IllegalArgumentException("Informe um e-mail válido.");
+		}
+		if (accountRepository.existsByEmailIgnoreCase(email)) {
+			throw new EmailAlreadyRegisteredException(email);
+		}
+
+		String phone = ContactNormalizer.normalizePhone(request.telefone());
+		if (role == UserRole.CANDIDATE) {
+			if (phone == null) {
+				throw new IllegalArgumentException(
+						"Informe um telefone válido com DDD (10 ou 11 dígitos)."
+				);
+			}
 		}
 
 		Account account = new Account(
 				request.nome().trim(),
-				request.email().trim().toLowerCase(),
+				email,
 				passwordEncoder.encode(request.senha()),
-				role
+				role,
+				phone
 		);
 		Account saved = accountRepository.save(account);
 		return buildAuthResponse(saved);
@@ -61,7 +77,8 @@ public class AuthService {
 
 	@Transactional(readOnly = true)
 	public AuthResponse login(LoginRequest request) {
-		Account account = accountRepository.findByEmailIgnoreCase(request.email().trim())
+		String email = ContactNormalizer.normalizeEmail(request.email());
+		Account account = accountRepository.findByEmailIgnoreCase(email != null ? email : "")
 				.orElseThrow(InvalidCredentialsException::new);
 
 		if (!passwordEncoder.matches(request.senha(), account.getPasswordHash())) {

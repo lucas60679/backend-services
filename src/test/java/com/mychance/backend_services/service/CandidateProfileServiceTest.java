@@ -2,12 +2,12 @@ package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
-import com.mychance.backend_services.dto.request.ExperienceRequest;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.exception.InvalidSkillException;
 import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.AnonymousProfileRepository;
 import com.mychance.backend_services.support.AccountTestBuilder;
+import com.mychance.backend_services.support.ProfileRequestTestBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,13 +35,9 @@ class CandidateProfileServiceTest {
 	@Test
 	void rejectsUnknownSkills() {
 		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("skills-test@test.local"));
-		ProfileCreateRequest request = new ProfileCreateRequest(
+		ProfileCreateRequest request = ProfileRequestTestBuilder.basicProfile(
 				Map.of("haskell", 5),
-				List.of(new ExperienceRequest("Dev", 12)),
-				List.of("Projeto limpo"),
-				null,
-				null,
-				5000
+				List.of(ProfileRequestTestBuilder.currentExperience("Dev", "junior", 12))
 		);
 
 		assertThatThrownBy(() -> candidateProfileService.createProfile(account.getId(), request))
@@ -52,13 +48,21 @@ class CandidateProfileServiceTest {
 	@Test
 	void sanitizesProjectDescriptionsBeforePersisting() {
 		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("sanitize-test@test.local"));
-		ProfileCreateRequest request = new ProfileCreateRequest(
+		ProfileCreateRequest base = ProfileRequestTestBuilder.basicProfile(
 				Map.of("python", 3),
-				List.of(new ExperienceRequest("Dev", 12)),
+				List.of(ProfileRequestTestBuilder.currentExperience("Dev", "junior", 12))
+		);
+		ProfileCreateRequest request = new ProfileCreateRequest(
+				base.competencias(),
+				base.experiencias(),
 				List.of("Contato: dev@email.com — veja github.com/dev/portfolio"),
-				null,
-				null,
-				5000
+				base.nivelEscolaridade(),
+				base.estado(),
+				base.cursoArea(),
+				base.pretensaoSalarialMinima(),
+				base.modalidadesPreferidas(),
+				base.vinculosPreferidos(),
+				base.idiomas()
 		);
 
 		candidateProfileService.createProfile(account.getId(), request);
@@ -74,16 +78,12 @@ class CandidateProfileServiceTest {
 	@Test
 	void persistsSkillsExperiencesAndProjects() {
 		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("persist-test@test.local"));
-		ProfileCreateRequest request = new ProfileCreateRequest(
+		ProfileCreateRequest request = ProfileRequestTestBuilder.basicProfile(
 				Map.of("python", 4, "sql", 5),
 				List.of(
-						new ExperienceRequest("Backend Júnior", 14),
-						new ExperienceRequest("Estagiário", 6)
-				),
-				List.of("API REST", "Pipeline de dados"),
-				"graduacao_concluida",
-				"nordeste",
-				6500
+						ProfileRequestTestBuilder.currentExperience("Backend Júnior", "junior", 14),
+						ProfileRequestTestBuilder.experience("Pesquisador", "estagio", 1, 2022, 6, 2022, false)
+				)
 		);
 
 		candidateProfileService.createProfile(account.getId(), request);
@@ -92,7 +92,9 @@ class CandidateProfileServiceTest {
 
 		assertThat(profile.getSkills()).hasSize(2);
 		assertThat(profile.getExperiences()).hasSize(2);
-		assertThat(profile.getProjects()).hasSize(2);
+		assertThat(profile.getProjects()).hasSize(1);
+		assertThat(profile.getLanguages()).hasSize(2);
+		assertThat(profile.getPreferredModalities()).isNotEmpty();
 		assertThat(profile.getCandidate().getFullName()).isEqualTo("Candidato Teste");
 	}
 }

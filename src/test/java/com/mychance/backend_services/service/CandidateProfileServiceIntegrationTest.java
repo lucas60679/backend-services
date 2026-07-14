@@ -2,13 +2,13 @@ package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobVacancy;
-import com.mychance.backend_services.dto.request.ExperienceRequest;
 import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.dto.response.RecommendationResponse;
 import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
 import com.mychance.backend_services.support.AccountTestBuilder;
+import com.mychance.backend_services.support.ProfileRequestTestBuilder;
 import com.mychance.backend_services.support.TestNlpMatchingConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,16 +42,12 @@ class CandidateProfileServiceIntegrationTest {
 	void createProfileAndFetchRecommendations() {
 		Account account = accountRepository.save(AccountTestBuilder.candidateAccount("candidate-integration@test.local"));
 
-		ProfileCreateRequest request = new ProfileCreateRequest(
+		ProfileCreateRequest request = ProfileRequestTestBuilder.basicProfile(
 				Map.of("python", 4, "sql", 5, "docker", 2, "powerbi", 0),
 				List.of(
-						new ExperienceRequest("Desenvolvedor Backend Júnior", 14),
-						new ExperienceRequest("Estagiário de Dados", 6)
-				),
-				List.of("Desenvolvimento de API de e-commerce utilizando Python e Docker."),
-				null,
-				null,
-				7000
+						ProfileRequestTestBuilder.currentExperience("Desenvolvedor Backend Júnior", "junior", 14),
+						ProfileRequestTestBuilder.experience("Pesquisador", "estagio", 1, 2022, 6, 2022, false)
+				)
 		);
 
 		ProfileCreateResponse created = candidateProfileService.createProfile(account.getId(), request);

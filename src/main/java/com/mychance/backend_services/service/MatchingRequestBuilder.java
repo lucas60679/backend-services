@@ -1,7 +1,9 @@
 package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
+import com.mychance.backend_services.domain.entity.CandidateExperience;
 import com.mychance.backend_services.domain.entity.JobVacancy;
+import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
 import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankRequest.CandidateMatchingPayload;
@@ -10,13 +12,18 @@ import com.mychance.backend_services.dto.nlp.MatchingRankRequest.JobRequirementP
 import com.mychance.backend_services.util.PublicIdFormatter;
 import org.springframework.stereotype.Component;
 
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
 public class MatchingRequestBuilder {
+
+	private static final double RECENCY_DECAY = 0.15;
 
 	public List<String> globalVocabulary() {
 		return Arrays.stream(SkillName.values())
@@ -35,18 +42,29 @@ public class MatchingRequestBuilder {
 				)
 		));
 
+		Map<String, Integer> jobLanguages = new LinkedHashMap<>();
+		jobVacancy.getLanguageRequirements().forEach(requirement ->
+				jobLanguages.put(requirement.getLanguageName().getKey(), requirement.getMinLevel().getRank())
+		);
+
 		List<CandidateMatchingPayload> candidatos = profiles.stream()
 				.map(profile -> new CandidateMatchingPayload(
 						PublicIdFormatter.toPublicCandidateId(profile.getId()),
 						buildCandidateSkills(profile),
 						profile.getProjects().size(),
-						totalExperienceYears(profile)
+						weightedExperienceYears(profile),
+						currentSeniorityRank(profile),
+						buildCandidateLanguages(profile)
 				))
 				.toList();
 
 		return new MatchingRankRequest(
 				globalVocabulary(),
-				new JobMatchingPayload(competencias),
+				new JobMatchingPayload(
+						competencias,
+						jobVacancy.getSeniorityLevel() != null ? jobVacancy.getSeniorityLevel().getRank() : 0,
+						jobLanguages
+				),
 				candidatos
 		);
 	}
@@ -59,10 +77,40 @@ public class MatchingRequestBuilder {
 		return skills;
 	}
 
-	private double totalExperienceYears(AnonymousProfile profile) {
-		int totalMonths = profile.getExperiences().stream()
-				.mapToInt(experience -> experience.getDurationMonths())
-				.sum();
-		return totalMonths / 12.0;
+	private Map<String, Integer> buildCandidateLanguages(AnonymousProfile profile) {
+		Map<String, Integer> languages = new LinkedHashMap<>();
+		profile.getLanguages().forEach(language ->
+				languages.put(language.getLanguageName().getKey(), language.getLanguageLevel().getRank())
+		);
+		return languages;
+	}
+
+	/**
+	 * Weighted years of experience: recent stints count more than older ones.
+	 */
+	double weightedExperienceYears(AnonymousProfile profile) {
+		YearMonth now = YearMonth.now();
+		double weightedMonths = 0.0;
+		for (CandidateExperience experience : profile.getExperiences()) {
+			YearMonth start = experience.getStartYearMonth();
+			YearMonth end = experience.getEndYearMonth();
+			long midpointOffset = ChronoUnit.MONTHS.between(start, end) / 2;
+			YearMonth midpoint = start.plusMonths(Math.max(0, midpointOffset));
+			double yearsAgo = Math.max(0.0, ChronoUnit.MONTHS.between(midpoint, now) / 12.0);
+			double weight = Math.exp(-RECENCY_DECAY * yearsAgo);
+			weightedMonths += experience.getDurationMonths() * weight;
+		}
+		return weightedMonths / 12.0;
+	}
+
+	int currentSeniorityRank(AnonymousProfile profile) {
+		return profile.getExperiences().stream()
+				.max(Comparator
+						.comparing(CandidateExperience::isCurrent)
+						.thenComparing(CandidateExperience::getEndYearMonth)
+						.thenComparing(CandidateExperience::getStartYearMonth))
+				.map(CandidateExperience::getSeniorityLevel)
+				.map(SeniorityLevel::getRank)
+				.orElse(0);
 	}
 }

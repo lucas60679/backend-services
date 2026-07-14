@@ -10,6 +10,7 @@ public record RegisterRequest(
 		@NotBlank @Size(max = 255) @JsonProperty("nome") String nome,
 		@NotBlank @Email @JsonProperty("email") String email,
 		@NotBlank @Size(min = 6, max = 100) @JsonProperty("senha") String senha,
-		@NotNull @JsonProperty("role") String role
+		@NotNull @JsonProperty("role") String role,
+		@Size(max = 30) @JsonProperty("telefone") String telefone
 ) {
 }

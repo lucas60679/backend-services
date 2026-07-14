@@ -11,7 +11,11 @@ public record MyProfileResponse(
 		@JsonProperty("experiencias") List<ExperienceResponse> experiencias,
 		@JsonProperty("projetos_destaque") List<String> projetosDestaque,
 		@JsonProperty("nivel_escolaridade") String nivelEscolaridade,
-		@JsonProperty("regiao") String regiao,
-		@JsonProperty("pretensao_salarial_minima") Integer pretensaoSalarialMinima
+		@JsonProperty("estado") String estado,
+		@JsonProperty("curso_area") String cursoArea,
+		@JsonProperty("pretensao_salarial_minima") Integer pretensaoSalarialMinima,
+		@JsonProperty("modalidades_preferidas") List<String> modalidadesPreferidas,
+		@JsonProperty("vinculos_preferidos") List<String> vinculosPreferidos,
+		@JsonProperty("idiomas") List<LanguageProficiencyResponse> idiomas
 ) {
 }

@@ -9,20 +9,20 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public enum BrazilianRegion {
-	NORTE("norte", "Região Norte"),
-	NORDESTE("nordeste", "Região Nordeste"),
-	CENTRO_OESTE("centro_oeste", "Região Centro-Oeste"),
-	SUDESTE("sudeste", "Região Sudeste"),
-	SUL("sul", "Região Sul");
+public enum EmploymentType {
+	BOLSA_PROJETO("bolsa_projeto", "Bolsa / projeto acadêmico"),
+	ESTAGIO("estagio", "Estágio"),
+	CLT("clt", "CLT"),
+	PJ("pj", "PJ"),
+	FREELANCER("freelancer", "Freelancer");
 
-	private static final Map<String, BrazilianRegion> BY_KEY = Arrays.stream(values())
-			.collect(Collectors.toMap(region -> region.key, Function.identity()));
+	private static final Map<String, EmploymentType> BY_KEY = Arrays.stream(values())
+			.collect(Collectors.toMap(item -> item.key, Function.identity()));
 
 	private final String key;
 	private final String displayName;
 
-	BrazilianRegion(String key, String displayName) {
+	EmploymentType(String key, String displayName) {
 		this.key = key;
 		this.displayName = displayName;
 	}
@@ -37,15 +37,15 @@ public enum BrazilianRegion {
 	}
 
 	@JsonCreator
-	public static BrazilianRegion fromKey(String value) {
+	public static EmploymentType fromKey(String value) {
 		if (value == null || value.isBlank()) {
 			return null;
 		}
-		BrazilianRegion region = BY_KEY.get(value.trim().toLowerCase(Locale.ROOT));
-		if (region == null) {
-			throw new IllegalArgumentException("Unknown region: " + value);
+		EmploymentType type = BY_KEY.get(value.trim().toLowerCase(Locale.ROOT));
+		if (type == null) {
+			throw new IllegalArgumentException("Unknown employment type: " + value);
 		}
-		return region;
+		return type;
 	}
 
 	public static boolean isValidKey(String value) {

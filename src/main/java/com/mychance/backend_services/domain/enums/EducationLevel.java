@@ -10,10 +10,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public enum EducationLevel {
+	ENSINO_MEDIO_COMPLETO("ensino_medio_completo", "Ensino Médio Completo"),
+	TECNICO("tecnico", "Ensino Técnico"),
+	GRADUACAO_ANDAMENTO("graduacao_andamento", "Graduação em Andamento"),
 	GRADUACAO_CONCLUIDA("graduacao_concluida", "Graduação Concluída"),
 	POS_GRADUACAO_ANDAMENTO("pos_graduacao_andamento", "Pós-Graduação em Andamento"),
-	POS_GRADUACAO_CONCLUIDA("pos_graduacao_concluida", "Pós-Graduação Concluída"),
-	TECNICO("tecnico", "Ensino Técnico");
+	POS_GRADUACAO_CONCLUIDA("pos_graduacao_concluida", "Pós-Graduação Concluída");
 
 	private static final Map<String, EducationLevel> BY_KEY = Arrays.stream(values())
 			.collect(Collectors.toMap(level -> level.key, Function.identity()));

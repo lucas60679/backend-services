@@ -11,7 +11,9 @@ public record MatchingRankRequest(
 		@JsonProperty("candidatos") List<CandidateMatchingPayload> candidatos
 ) {
 	public record JobMatchingPayload(
-			@JsonProperty("competencias") Map<String, JobRequirementPayload> competencias
+			@JsonProperty("competencias") Map<String, JobRequirementPayload> competencias,
+			@JsonProperty("senioridade") int senioridade,
+			@JsonProperty("idiomas") Map<String, Integer> idiomas
 	) {
 	}
 
@@ -26,7 +28,9 @@ public record MatchingRankRequest(
 			@JsonProperty("candidato_id") String candidatoId,
 			@JsonProperty("competencias") Map<String, Integer> competencias,
 			@JsonProperty("projetos") int projetos,
-			@JsonProperty("anos_experiencia") double anosExperiencia
+			@JsonProperty("anos_experiencia") double anosExperiencia,
+			@JsonProperty("senioridade") int senioridade,
+			@JsonProperty("idiomas") Map<String, Integer> idiomas
 	) {
 	}
 }

@@ -13,7 +13,14 @@ import java.util.List;
 public record JobCreateRequest(
 		@NotBlank @JsonProperty("titulo") String titulo,
 		@Size(max = 2000) @JsonProperty("descricao") String descricao,
+		@NotBlank @Size(max = 255) @JsonProperty("empresa_instituicao") String empresaInstituicao,
+		@NotBlank @JsonProperty("modalidade") String modalidade,
+		@NotBlank @JsonProperty("tipo_vinculo") String tipoVinculo,
+		@Size(max = 150) @JsonProperty("local") String local,
+		@NotBlank @JsonProperty("senioridade") String senioridade,
+		@Min(1) @JsonProperty("salario_minimo") Integer salarioMinimo,
 		@NotNull @Min(1) @JsonProperty("salario_maximo") Integer salarioMaximo,
-		@NotEmpty @Valid @JsonProperty("requisitos") List<JobRequirementRequest> requisitos
+		@NotEmpty @Valid @JsonProperty("requisitos") List<JobRequirementRequest> requisitos,
+		@NotNull @Valid @JsonProperty("idiomas") List<JobLanguageRequirementRequest> idiomas
 ) {
 }

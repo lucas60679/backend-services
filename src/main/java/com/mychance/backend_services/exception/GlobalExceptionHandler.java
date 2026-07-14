@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
 		return problem;
 	}
 
-	@ExceptionHandler({InvalidEducationLevelException.class, InvalidRegionException.class})
+	@ExceptionHandler({InvalidEducationLevelException.class, InvalidStateException.class})
 	public ProblemDetail handleInvalidMetadata(RuntimeException exception) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
 		problem.setTitle("Invalid profile metadata");
@@ -134,6 +134,13 @@ public class GlobalExceptionHandler {
 
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, details);
 		problem.setTitle("Validation failed");
+		return problem;
+	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ProblemDetail handleIllegalArgument(IllegalArgumentException exception) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+		problem.setTitle("Invalid request");
 		return problem;
 	}
 }

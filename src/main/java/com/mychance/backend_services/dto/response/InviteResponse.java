@@ -15,6 +15,7 @@ public record InviteResponse(
 		@JsonProperty("descricao_vaga") String descricaoVaga,
 		@JsonProperty("candidato_nome") String candidatoNome,
 		@JsonProperty("candidato_email") String candidatoEmail,
+		@JsonProperty("candidato_telefone") String candidatoTelefone,
 		@JsonProperty("recruiter_nome") String recruiterNome,
 		@JsonProperty("recruiter_email") String recruiterEmail,
 		@JsonProperty("proposed_interview_at") Instant proposedInterviewAt,

@@ -4,9 +4,7 @@ import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
 import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.domain.enums.InviteStatus;
-import com.mychance.backend_services.dto.request.ExperienceRequest;
 import com.mychance.backend_services.dto.request.InviteCreateRequest;
-import com.mychance.backend_services.dto.request.ProfileCreateRequest;
 import com.mychance.backend_services.dto.response.InviteResponse;
 import com.mychance.backend_services.dto.response.ProfileCreateResponse;
 import com.mychance.backend_services.exception.InvalidInviteTransitionException;
@@ -15,6 +13,7 @@ import com.mychance.backend_services.repository.AccountRepository;
 import com.mychance.backend_services.repository.InterviewInviteRepository;
 import com.mychance.backend_services.repository.JobVacancyRepository;
 import com.mychance.backend_services.support.AccountTestBuilder;
+import com.mychance.backend_services.support.ProfileRequestTestBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -82,13 +81,9 @@ class InterviewInviteServiceIntegrationTest {
 				new InviteCreateRequest(profile.candidatoId(), "Proposta")
 		);
 
-		candidateProfileService.updateProfile(account.getId(), new ProfileCreateRequest(
+		candidateProfileService.updateProfile(account.getId(), ProfileRequestTestBuilder.basicProfile(
 				Map.of("python", 1, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Perfil atualizado"),
-				null,
-				null,
-				5000
+				List.of(ProfileRequestTestBuilder.currentExperience("Dev", "junior", 24))
 		));
 
 		var invite = interviewInviteRepository.findById(sent.conviteId()).orElseThrow();
@@ -131,13 +126,12 @@ class InterviewInviteServiceIntegrationTest {
 	}
 
 	private ProfileCreateResponse createProfile(Account account, String ignoredEmail) {
-		return candidateProfileService.createProfile(account.getId(), new ProfileCreateRequest(
-				Map.of("python", 5, "sql", 5),
-				List.of(new ExperienceRequest("Dev", 24)),
-				List.of("Projeto anonimizado"),
-				null,
-				null,
-				5000
-		));
+		return candidateProfileService.createProfile(
+				account.getId(),
+				ProfileRequestTestBuilder.basicProfile(
+						Map.of("python", 5, "sql", 5),
+						List.of(ProfileRequestTestBuilder.currentExperience("Dev", "pleno", 24))
+				)
+		);
 	}
 }

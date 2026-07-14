@@ -1,9 +1,14 @@
 package com.mychance.backend_services.service;
 
 import com.mychance.backend_services.domain.entity.AnonymousProfile;
+import com.mychance.backend_services.domain.entity.CandidateLanguage;
 import com.mychance.backend_services.domain.entity.InterviewInvite;
+import com.mychance.backend_services.domain.entity.JobLanguageRequirement;
 import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.domain.enums.InviteStatus;
+import com.mychance.backend_services.domain.enums.LanguageLevel;
+import com.mychance.backend_services.domain.enums.LanguageName;
+import com.mychance.backend_services.domain.enums.WorkModality;
 import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
 import com.mychance.backend_services.dto.response.ExperienceResponse;
@@ -52,6 +57,7 @@ public class RecommendationService {
 	public List<RecommendationResponse> getRecommendations(UUID jobId) {
 		JobVacancy jobVacancy = jobVacancyRepository.findByIdWithRequirements(jobId)
 				.orElseThrow(() -> new JobNotFoundException(jobId));
+		jobVacancy.getLanguageRequirements().size();
 
 		Map<String, InviteStatus> inviteStatusByCandidate = interviewInviteRepository.findByJobId(jobId).stream()
 				.collect(Collectors.toMap(
@@ -67,7 +73,7 @@ public class RecommendationService {
 				.collect(Collectors.toSet());
 
 		List<AnonymousProfile> profiles = anonymousProfileRepository.findAll().stream()
-				.filter(profile -> isSalaryCompatible(profile, jobVacancy))
+				.filter(profile -> isCompatible(profile, jobVacancy))
 				.toList();
 		profiles.forEach(this::initializeProfileDetails);
 
@@ -115,6 +121,24 @@ public class RecommendationService {
 		);
 	}
 
+	private boolean isCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		return isSalaryCompatible(profile, jobVacancy)
+				&& isModalityCompatible(profile, jobVacancy)
+				&& isEmploymentCompatible(profile, jobVacancy)
+				&& isLanguageCompatible(profile, jobVacancy)
+				&& isLocationCompatible(profile, jobVacancy);
+	}
+
+	private boolean isLocationCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		if (jobVacancy.getWorkModality() != WorkModality.PRESENCIAL) {
+			return true;
+		}
+		if (jobVacancy.getLocation() == null || profile.getRegionState() == null) {
+			return false;
+		}
+		return jobVacancy.getLocation().equalsIgnoreCase(profile.getRegionState().getKey());
+	}
+
 	private boolean isSalaryCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
 		if (jobVacancy.getMaxSalary() == null || profile.getSalaryExpectationMin() == null) {
 			return true;
@@ -122,10 +146,49 @@ public class RecommendationService {
 		return profile.getSalaryExpectationMin() <= jobVacancy.getMaxSalary();
 	}
 
+	private boolean isModalityCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		if (profile.getPreferredModalities().isEmpty() || jobVacancy.getWorkModality() == null) {
+			return true;
+		}
+		return profile.getPreferredModalities().contains(jobVacancy.getWorkModality());
+	}
+
+	private boolean isEmploymentCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		if (profile.getPreferredEmploymentTypes().isEmpty() || jobVacancy.getEmploymentType() == null) {
+			return true;
+		}
+		return profile.getPreferredEmploymentTypes().contains(jobVacancy.getEmploymentType());
+	}
+
+	private boolean isLanguageCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		List<JobLanguageRequirement> required = jobVacancy.getLanguageRequirements();
+		if (required == null || required.isEmpty()) {
+			return true;
+		}
+
+		Map<LanguageName, LanguageLevel> candidateLevels = profile.getLanguages().stream()
+				.collect(Collectors.toMap(
+						CandidateLanguage::getLanguageName,
+						CandidateLanguage::getLanguageLevel,
+						(existing, replacement) -> existing.getRank() >= replacement.getRank() ? existing : replacement
+				));
+
+		for (JobLanguageRequirement requirement : required) {
+			LanguageLevel candidateLevel = candidateLevels.get(requirement.getLanguageName());
+			if (candidateLevel == null || !candidateLevel.meetsOrExceeds(requirement.getMinLevel())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private void initializeProfileDetails(AnonymousProfile profile) {
 		profile.getSkills().size();
 		profile.getProjects().size();
 		profile.getExperiences().size();
+		profile.getLanguages().size();
+		profile.getPreferredModalities().size();
+		profile.getPreferredEmploymentTypes().size();
 	}
 
 	private RecommendationResponse toRecommendation(
@@ -143,7 +206,16 @@ public class RecommendationService {
 				.toList();
 
 		List<ExperienceResponse> experiencias = profile.getExperiences().stream()
-				.map(experience -> new ExperienceResponse(experience.getRoleTitle(), experience.getDurationMonths()))
+				.map(experience -> new ExperienceResponse(
+						experience.getRoleTitle(),
+						experience.getSeniorityLevel().getKey(),
+						experience.getStartMonth(),
+						experience.getStartYear(),
+						experience.getEndMonth(),
+						experience.getEndYear(),
+						experience.isCurrent(),
+						experience.getDurationMonths()
+				))
 				.toList();
 
 		List<String> projetos = profile.getProjects().stream()
