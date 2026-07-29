@@ -2,7 +2,8 @@ package com.mychance.backend_services.domain.enums;
 
 public enum UserRole {
 	CANDIDATE,
-	RECRUITER;
+	RECRUITER,
+	ADMIN;
 
 	public static UserRole fromKey(String key) {
 		return UserRole.valueOf(key.trim().toUpperCase());

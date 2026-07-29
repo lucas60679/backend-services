@@ -47,6 +47,10 @@ public class AuthService {
 
 		UserRole role = UserRole.fromKey(request.role());
 
+		if (role == UserRole.ADMIN) {
+			throw new IllegalArgumentException("Registro não permitido para este perfil.");
+		}
+
 		String email = ContactNormalizer.normalizeEmail(request.email());
 		if (!ContactNormalizer.isValidEmail(email)) {
 			throw new IllegalArgumentException("Informe um e-mail válido.");

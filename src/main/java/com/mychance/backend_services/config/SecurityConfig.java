@@ -28,6 +28,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers("/health", "/api/v1/auth/**", "/h2-console/**").permitAll()
 						.requestMatchers("/api/v1/dev/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/v1/admin/reset").hasRole("ADMIN")
 						.requestMatchers(HttpMethod.POST, "/api/v1/candidates/profiles").hasRole("CANDIDATE")
 						.requestMatchers(HttpMethod.PUT, "/api/v1/candidates/profiles/me").hasRole("CANDIDATE")
 						.requestMatchers(HttpMethod.GET, "/api/v1/candidates/me/**").hasRole("CANDIDATE")

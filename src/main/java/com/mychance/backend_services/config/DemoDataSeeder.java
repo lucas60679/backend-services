@@ -34,9 +34,16 @@ public class DemoDataSeeder {
 
 	public static final UUID RECRUITER_ALPHA_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 	public static final UUID RECRUITER_BETA_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+	public static final UUID RECRUITER_TEST_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
+	public static final UUID ADMIN_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
+
+	public static final UUID ANA_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1");
+	public static final UUID DIEGO_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4");
+	public static final UUID ELISA_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5");
 
 	public static final String DEMO_RECRUITER_PASSWORD = "recruiter123";
 	public static final String DEMO_CANDIDATE_PASSWORD = "candidato123";
+	public static final String DEMO_ADMIN_PASSWORD = "admin123";
 
 	private final AccountRepository accountRepository;
 	private final JobVacancyRepository jobVacancyRepository;
@@ -57,14 +64,16 @@ public class DemoDataSeeder {
 
 	@Transactional
 	public void seed() {
+		seedAdmin();
 		seedRecruiter(RECRUITER_ALPHA_ID, "Recrutador Demo", "recruiter@mychance.local");
 		seedRecruiter(RECRUITER_BETA_ID, "Recrutadora Beta", "recruiter2@mychance.local");
+		seedRecruiter(RECRUITER_TEST_ID, "Recrutador Teste R2", "recruiter.teste@demo.local");
 
 		seedBackendJobIfMissing();
 		seedFrontendJobIfMissing();
 
 		seedCandidateProfile(
-				UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"),
+				ANA_ID,
 				"Ana Silva",
 				"ana.silva@demo.local",
 				"(83) 99999-0001",
@@ -103,7 +112,7 @@ public class DemoDataSeeder {
 				)
 		);
 		seedCandidateProfile(
-				UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4"),
+				DIEGO_ID,
 				"Diego Santos",
 				"diego.santos@demo.local",
 				"(83) 99999-0004",
@@ -116,7 +125,7 @@ public class DemoDataSeeder {
 				)
 		);
 		seedCandidateProfile(
-				UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5"),
+				ELISA_ID,
 				"Elisa Ferreira",
 				"elisa.ferreira@demo.local",
 				"(83) 99999-0005",
@@ -145,6 +154,7 @@ public class DemoDataSeeder {
 		log.info("Demo dataset ready. Recruiters: recruiter@mychance.local, recruiter2@mychance.local (senha: {})",
 				DEMO_RECRUITER_PASSWORD);
 		log.info("Demo candidates: *@demo.local (senha: {})", DEMO_CANDIDATE_PASSWORD);
+		log.info("Demo admin: admin@mychance.local (senha: {})", DEMO_ADMIN_PASSWORD);
 	}
 
 	private ProfileCreateRequest profile(
@@ -181,6 +191,20 @@ public class DemoDataSeeder {
 			boolean atual
 	) {
 		return new ExperienceRequest(cargo, senioridade, inicioMes, inicioAno, fimMes, fimAno, atual);
+	}
+
+	private void seedAdmin() {
+		if (accountRepository.existsById(ADMIN_ID) || accountRepository.existsByEmailIgnoreCase("admin@mychance.local")) {
+			return;
+		}
+		accountRepository.save(Account.withId(
+				ADMIN_ID,
+				"Administrador Demo",
+				"admin@mychance.local",
+				passwordEncoder.encode(DEMO_ADMIN_PASSWORD),
+				UserRole.ADMIN
+		));
+		log.info("Demo admin seeded: admin@mychance.local / {}", DEMO_ADMIN_PASSWORD);
 	}
 
 	private void seedRecruiter(UUID id, String name, String email) {
