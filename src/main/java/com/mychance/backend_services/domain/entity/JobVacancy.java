@@ -1,19 +1,28 @@
 package com.mychance.backend_services.domain.entity;
 
+import com.mychance.backend_services.domain.enums.Benefit;
 import com.mychance.backend_services.domain.enums.EmploymentType;
+import com.mychance.backend_services.domain.enums.SalaryRange;
 import com.mychance.backend_services.domain.enums.SeniorityLevel;
+import com.mychance.backend_services.domain.enums.SoftSkill;
 import com.mychance.backend_services.domain.enums.WorkModality;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,6 +65,20 @@ public class JobVacancy {
 
 	@Column(name = "max_salary")
 	private Integer maxSalary;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "faixa_salarial", length = 50)
+	private SalaryRange faixaSalarial;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "job_soft_skills", joinColumns = @JoinColumn(name = "job_id"))
+	@Column(name = "soft_skill")
+	private Set<SoftSkill> softSkills = new HashSet<>();
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "job_benefits", joinColumns = @JoinColumn(name = "job_id"))
+	@Column(name = "benefit")
+	private Set<Benefit> beneficios = new HashSet<>();
 
 	@OneToMany(mappedBy = "jobVacancy", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<JobRequirement> requirements = new ArrayList<>();
@@ -206,5 +229,29 @@ public class JobVacancy {
 
 	public void clearLanguageRequirements() {
 		languageRequirements.clear();
+	}
+
+	public SalaryRange getFaixaSalarial() {
+		return faixaSalarial;
+	}
+
+	public void setFaixaSalarial(SalaryRange faixaSalarial) {
+		this.faixaSalarial = faixaSalarial;
+	}
+
+	public Set<SoftSkill> getSoftSkills() { 
+		return softSkills; 
+	}
+
+	public void setSoftSkills(Set<SoftSkill> softSkills) { 
+		this.softSkills = softSkills; 
+	}
+
+	public Set<Benefit> getBeneficios() { 
+		return beneficios; 
+	}
+	
+	public void setBeneficios(Set<Benefit> beneficios) { 
+		this.beneficios = beneficios; 
 	}
 }

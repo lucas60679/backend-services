@@ -4,6 +4,9 @@ import com.mychance.backend_services.domain.enums.BrazilianState;
 import com.mychance.backend_services.domain.enums.EducationLevel;
 import com.mychance.backend_services.domain.enums.EmploymentType;
 import com.mychance.backend_services.domain.enums.WorkModality;
+import com.mychance.backend_services.domain.enums.SalaryRange;
+import com.mychance.backend_services.domain.enums.SoftSkill;
+import com.mychance.backend_services.domain.enums.Benefit;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -66,6 +69,22 @@ public class AnonymousProfile {
 	@Column(name = "employment_type", nullable = false, length = 30)
 	private Set<EmploymentType> preferredEmploymentTypes = new HashSet<>();
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "faixa_salarial", length = 50)
+	private SalaryRange faixaSalarial;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "profile_soft_skills", joinColumns = @JoinColumn(name = "profile_id"))
+	@Enumerated(EnumType.STRING)
+	@Column(name = "soft_skill")
+	private Set<SoftSkill> softSkills = new HashSet<>();
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "profile_benefits", joinColumns = @JoinColumn(name = "profile_id"))
+	@Enumerated(EnumType.STRING)
+	@Column(name = "benefit")
+	private Set<Benefit> beneficios = new HashSet<>();
+
 	@OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CandidateSkill> skills = new ArrayList<>();
 
@@ -77,7 +96,7 @@ public class AnonymousProfile {
 
 	@OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CandidateLanguage> languages = new ArrayList<>();
-
+	
 	protected AnonymousProfile() {
 	}
 
@@ -195,5 +214,29 @@ public class AnonymousProfile {
 	public void addLanguage(CandidateLanguage language) {
 		languages.add(language);
 		language.setProfile(this);
+	}
+
+	public SalaryRange getFaixaSalarial() {
+		return faixaSalarial;
+	}
+
+	public void setFaixaSalarial(SalaryRange faixaSalarial) {
+		this.faixaSalarial = faixaSalarial;
+	}
+
+	public Set<SoftSkill> getSoftSkills() { 
+		return softSkills; 
+	}
+
+	public void setSoftSkills(Set<SoftSkill> softSkills) { 
+		this.softSkills = softSkills; 
+	}
+
+	public Set<Benefit> getBeneficios() { 
+		return beneficios; 
+	}
+	
+	public void setBeneficios(Set<Benefit> beneficios) { 
+		this.beneficios = beneficios; 
 	}
 }

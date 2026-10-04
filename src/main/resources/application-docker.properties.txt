@@ -1,0 +1,3 @@
+# Runs before Hibernate schema validation on existing PostgreSQL volumes.
+spring.sql.init.mode=always
+spring.sql.init.schema-locations=classpath:migrations/docker-migrations.sql

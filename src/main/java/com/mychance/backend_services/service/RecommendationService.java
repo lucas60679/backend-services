@@ -8,6 +8,7 @@ import com.mychance.backend_services.domain.entity.JobVacancy;
 import com.mychance.backend_services.domain.enums.InviteStatus;
 import com.mychance.backend_services.domain.enums.LanguageLevel;
 import com.mychance.backend_services.domain.enums.LanguageName;
+import com.mychance.backend_services.domain.enums.SalaryRange;
 import com.mychance.backend_services.domain.enums.WorkModality;
 import com.mychance.backend_services.dto.nlp.MatchingRankRequest;
 import com.mychance.backend_services.dto.nlp.MatchingRankResponse;
@@ -117,7 +118,10 @@ public class RecommendationService {
 				recommendation.competenciasTecnicas(),
 				recommendation.experiencias(),
 				recommendation.projetosDestaque(),
-				recommendation.conviteStatus()
+				recommendation.conviteStatus(),
+				recommendation.faixaSalarial(),
+				recommendation.softSkills(),
+				recommendation.beneficios()
 		);
 	}
 
@@ -129,6 +133,21 @@ public class RecommendationService {
 				&& isLocationCompatible(profile, jobVacancy);
 	}
 
+	private boolean isSalaryCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
+		SalaryRange candFaixa = profile.getFaixaSalarial();
+		SalaryRange vagaFaixa = jobVacancy.getFaixaSalarial();
+
+		if (vagaFaixa == null || candFaixa == null) {
+			return true;
+		}
+
+		if (vagaFaixa == SalaryRange.A_COMBINAR || candFaixa == SalaryRange.A_COMBINAR) {
+			return true;
+		}
+
+		return candFaixa.getRank() <= vagaFaixa.getRank();
+	}
+	
 	private boolean isLocationCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
 		if (jobVacancy.getWorkModality() != WorkModality.PRESENCIAL) {
 			return true;
@@ -137,13 +156,6 @@ public class RecommendationService {
 			return false;
 		}
 		return jobVacancy.getLocation().equalsIgnoreCase(profile.getRegionState().getKey());
-	}
-
-	private boolean isSalaryCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
-		if (jobVacancy.getMaxSalary() == null || profile.getSalaryExpectationMin() == null) {
-			return true;
-		}
-		return profile.getSalaryExpectationMin() <= jobVacancy.getMaxSalary();
 	}
 
 	private boolean isModalityCompatible(AnonymousProfile profile, JobVacancy jobVacancy) {
@@ -189,6 +201,8 @@ public class RecommendationService {
 		profile.getLanguages().size();
 		profile.getPreferredModalities().size();
 		profile.getPreferredEmploymentTypes().size();
+		profile.getSoftSkills().size();
+		profile.getBeneficios().size();
 	}
 
 	private RecommendationResponse toRecommendation(
@@ -232,7 +246,10 @@ public class RecommendationService {
 				competencias,
 				experiencias,
 				projetos,
-				conviteStatus
+				conviteStatus,
+				profile.getFaixaSalarial(),
+				new java.util.ArrayList<>(profile.getSoftSkills()),
+				new java.util.ArrayList<>(profile.getBeneficios())
 		);
 	}
 }
