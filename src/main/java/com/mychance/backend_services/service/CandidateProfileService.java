@@ -7,6 +7,7 @@ import com.mychance.backend_services.domain.entity.CandidateExperience;
 import com.mychance.backend_services.domain.entity.CandidateLanguage;
 import com.mychance.backend_services.domain.entity.CandidateProject;
 import com.mychance.backend_services.domain.entity.CandidateSkill;
+import com.mychance.backend_services.domain.enums.Benefit;
 import com.mychance.backend_services.domain.enums.BrazilianState;
 import com.mychance.backend_services.domain.enums.EducationLevel;
 import com.mychance.backend_services.domain.enums.EmploymentType;
@@ -14,6 +15,7 @@ import com.mychance.backend_services.domain.enums.LanguageLevel;
 import com.mychance.backend_services.domain.enums.LanguageName;
 import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
+import com.mychance.backend_services.domain.enums.SoftSkill;
 import com.mychance.backend_services.domain.enums.UserRole;
 import com.mychance.backend_services.domain.enums.WorkModality;
 import com.mychance.backend_services.dto.request.ExperienceRequest;
@@ -187,9 +189,26 @@ public class CandidateProfileService {
 		profile.setSalaryExpectationMin(request.pretensaoSalarialMinima());
 		profile.setPreferredModalities(parseModalities(request.modalidadesPreferidas()));
 		profile.setPreferredEmploymentTypes(parseEmploymentTypes(request.vinculosPreferidos()));
+		
 		profile.setFaixaSalarial(request.faixaSalarial());
-		profile.setSoftSkills(new LinkedHashSet<>(request.softSkills()));
-		profile.setBeneficios(new LinkedHashSet<>(request.beneficios()));
+		
+		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+		
+		Set softSkillsSeguras = new LinkedHashSet<>();
+		if (request.softSkills() != null) {
+			for (Object obj : request.softSkills()) {
+				softSkillsSeguras.add(mapper.convertValue(obj, SoftSkill.class));
+			}
+		}
+		profile.setSoftSkills(softSkillsSeguras);
+		
+		Set beneficiosSeguros = new LinkedHashSet<>();
+		if (request.beneficios() != null) {
+			for (Object obj : request.beneficios()) {
+				beneficiosSeguros.add(mapper.convertValue(obj, Benefit.class));
+			}
+		}
+		profile.setBeneficios(beneficiosSeguros);
 	}
 
 	private void mapAnonymizedMetadata(ProfileCreateRequest request, AnonymousProfile profile) {
@@ -232,10 +251,6 @@ public class CandidateProfileService {
 		}
 	}
 
-	private void mapExperiences(ProfileCreateRequest request, AnonymousProfile profile) {
-		request.experiencias().forEach(experience -> profile.addExperience(toExperienceEntity(experience)));
-	}
-
 	private CandidateExperience toExperienceEntity(ExperienceRequest experience) {
 		if (!SeniorityLevel.isValidKey(experience.senioridade())) {
 			throw new IllegalArgumentException("Senioridade inválida: " + experience.senioridade());
@@ -259,15 +274,26 @@ public class CandidateProfileService {
 		);
 	}
 
-	private void mapProjects(ProfileCreateRequest request, AnonymousProfile profile) {
-		request.projetosDestaque().forEach(projectDescription -> {
-			String sanitized = textSanitizerService.sanitize(projectDescription);
-			profile.addProject(new CandidateProject(sanitized));
-		});
+	private void mapExperiences(ProfileCreateRequest request, AnonymousProfile profile) {
+		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+		for (Object obj : request.experiencias()) {
+			ExperienceRequest experience = mapper.convertValue(obj, ExperienceRequest.class);
+			profile.addExperience(toExperienceEntity(experience));
+		}
 	}
 
-	private void mapLanguages(List<LanguageProficiencyRequest> idiomas, AnonymousProfile profile) {
-		for (LanguageProficiencyRequest idioma : idiomas) {
+	private void mapProjects(ProfileCreateRequest request, AnonymousProfile profile) {
+		for (Object obj : request.projetosDestaque()) {
+			String projectDescription = String.valueOf(obj);
+			String sanitized = textSanitizerService.sanitize(projectDescription);
+			profile.addProject(new CandidateProject(sanitized));
+		}
+	}
+
+	private void mapLanguages(List idiomas, AnonymousProfile profile) {
+		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+		for (Object obj : idiomas) {
+			LanguageProficiencyRequest idioma = mapper.convertValue(obj, LanguageProficiencyRequest.class);
 			if (!LanguageName.isValidKey(idioma.idioma())) {
 				throw new IllegalArgumentException("Idioma inválido: " + idioma.idioma());
 			}

@@ -1,7 +1,6 @@
 package com.mychance.backend_services.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -16,7 +15,10 @@ public record JobDetailResponse(
 		@JsonProperty("senioridade") String senioridade,
 		@JsonProperty("salario_minimo") Integer salarioMinimo,
 		@JsonProperty("salario_maximo") Integer salarioMaximo,
-		@JsonProperty("requisitos") List<JobRequirementDetailResponse> requisitos,
-		@JsonProperty("idiomas") List<JobLanguageRequirementDetailResponse> idiomas
+		@JsonProperty("faixa_salarial") String faixaSalarial,
+		@JsonProperty("soft_skills") List softSkills,
+		@JsonProperty("beneficios") List beneficios,
+		@JsonProperty("requisitos") List requisitos,
+		@JsonProperty("idiomas") List idiomas
 ) {
 }

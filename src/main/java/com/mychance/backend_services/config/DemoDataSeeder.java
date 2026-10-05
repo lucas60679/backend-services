@@ -1,5 +1,7 @@
 package com.mychance.backend_services.config;
-
+import com.mychance.backend_services.domain.enums.SalaryRange;
+import com.mychance.backend_services.domain.enums.SoftSkill;
+import com.mychance.backend_services.domain.enums.Benefit;
 import com.mychance.backend_services.domain.entity.Account;
 import com.mychance.backend_services.domain.entity.JobLanguageRequirement;
 import com.mychance.backend_services.domain.entity.JobRequirement;
@@ -177,7 +179,10 @@ public class DemoDataSeeder {
 				List.of(
 						new LanguageProficiencyRequest("portugues", "fluente"),
 						new LanguageProficiencyRequest("ingles", "intermediario")
-				)
+				),
+				SalaryRange.DE_4K_A_7K,
+            	List.of(SoftSkill.COMUNICACAO, SoftSkill.PROATIVIDADE),
+            	List.of(Benefit.PLANO_SAUDE, Benefit.GYMPASS)
 		);
 	}
 

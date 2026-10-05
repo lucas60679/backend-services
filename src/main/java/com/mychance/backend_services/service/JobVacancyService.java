@@ -1,14 +1,18 @@
 package com.mychance.backend_services.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mychance.backend_services.domain.entity.JobLanguageRequirement;
 import com.mychance.backend_services.domain.entity.JobRequirement;
 import com.mychance.backend_services.domain.entity.JobVacancy;
+import com.mychance.backend_services.domain.enums.Benefit;
 import com.mychance.backend_services.domain.enums.BrazilianState;
 import com.mychance.backend_services.domain.enums.EmploymentType;
 import com.mychance.backend_services.domain.enums.LanguageLevel;
 import com.mychance.backend_services.domain.enums.LanguageName;
+import com.mychance.backend_services.domain.enums.SalaryRange;
 import com.mychance.backend_services.domain.enums.SeniorityLevel;
 import com.mychance.backend_services.domain.enums.SkillName;
+import com.mychance.backend_services.domain.enums.SoftSkill;
 import com.mychance.backend_services.domain.enums.WorkModality;
 import com.mychance.backend_services.dto.request.JobCreateRequest;
 import com.mychance.backend_services.dto.request.JobLanguageRequirementRequest;
@@ -25,7 +29,9 @@ import com.mychance.backend_services.repository.JobVacancyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -39,7 +45,6 @@ public class JobVacancyService {
 
 	@Transactional
 	public JobCreateResponse createJob(UUID recruiterId, JobCreateRequest request) {
-		validateSalaryRange(request.salarioMinimo(), request.salarioMaximo());
 		WorkModality modality = parseModality(request.modalidade());
 		String location = normalizeLocation(request.local(), modality);
 		JobVacancy jobVacancy = new JobVacancy(
@@ -51,11 +56,15 @@ public class JobVacancyService {
 				parseEmploymentType(request.tipoVinculo()),
 				location,
 				parseSeniority(request.senioridade()),
-				request.salarioMinimo(),
-				request.salarioMaximo()
+				null, // Retrocompatibilidade (salário mínimo manual agora é nulo)
+				null  // Retrocompatibilidade (salário máximo manual agora é nulo)
 		);
+		
+		jobVacancy.setFaixaSalarial(request.faixaSalarial());
+		
 		mapRequirements(request.requisitos(), jobVacancy);
 		mapLanguages(request.idiomas(), jobVacancy);
+		mapSoftSkillsAndBenefits(request, jobVacancy);
 
 		JobVacancy saved = jobVacancyRepository.save(jobVacancy);
 		return new JobCreateResponse(saved.getId(), "Vaga criada com sucesso");
@@ -79,7 +88,7 @@ public class JobVacancyService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<JobSummaryResponse> listRecruiterJobs(UUID recruiterId) {
+	public List listRecruiterJobs(UUID recruiterId) {
 		return jobVacancyRepository.findByRecruiterIdOrderByTitleAsc(recruiterId).stream()
 				.map(job -> new JobSummaryResponse(job.getId(), job.getTitle()))
 				.toList();
@@ -93,10 +102,10 @@ public class JobVacancyService {
 
 	@Transactional
 	public JobCreateResponse updateJob(UUID recruiterId, UUID jobId, JobCreateRequest request) {
-		validateSalaryRange(request.salarioMinimo(), request.salarioMaximo());
 		JobVacancy jobVacancy = getOwnedJob(recruiterId, jobId);
 		WorkModality modality = parseModality(request.modalidade());
 		String location = normalizeLocation(request.local(), modality);
+		
 		jobVacancy.setTitle(request.titulo());
 		jobVacancy.setDescription(request.descricao());
 		jobVacancy.setCompanyName(request.empresaInstituicao().trim());
@@ -104,19 +113,43 @@ public class JobVacancyService {
 		jobVacancy.setEmploymentType(parseEmploymentType(request.tipoVinculo()));
 		jobVacancy.setLocation(location);
 		jobVacancy.setSeniorityLevel(parseSeniority(request.senioridade()));
-		jobVacancy.setMinSalary(request.salarioMinimo());
-		jobVacancy.setMaxSalary(request.salarioMaximo());
+		jobVacancy.setFaixaSalarial(request.faixaSalarial());
+		
 		jobVacancy.clearRequirements();
 		jobVacancy.clearLanguageRequirements();
+		
 		mapRequirements(request.requisitos(), jobVacancy);
 		mapLanguages(request.idiomas(), jobVacancy);
+		mapSoftSkillsAndBenefits(request, jobVacancy);
 
 		JobVacancy saved = jobVacancyRepository.save(jobVacancy);
 		return new JobCreateResponse(saved.getId(), "Vaga atualizada com sucesso");
 	}
 
-	private void mapRequirements(List<JobRequirementRequest> requisitos, JobVacancy jobVacancy) {
-		for (JobRequirementRequest requirement : requisitos) {
+	private void mapSoftSkillsAndBenefits(JobCreateRequest request, JobVacancy jobVacancy) {
+		ObjectMapper mapper = new ObjectMapper();
+		
+		Set softSkillsSeguras = new LinkedHashSet<>();
+		if (request.softSkills() != null) {
+			for (Object obj : request.softSkills()) {
+				softSkillsSeguras.add(mapper.convertValue(obj, SoftSkill.class));
+			}
+		}
+		jobVacancy.setSoftSkills(softSkillsSeguras);
+		
+		Set beneficiosSeguros = new LinkedHashSet<>();
+		if (request.beneficios() != null) {
+			for (Object obj : request.beneficios()) {
+				beneficiosSeguros.add(mapper.convertValue(obj, Benefit.class));
+			}
+		}
+		jobVacancy.setBeneficios(beneficiosSeguros);
+	}
+
+	private void mapRequirements(List requisitos, JobVacancy jobVacancy) {
+		ObjectMapper mapper = new ObjectMapper();
+		for (Object obj : requisitos) {
+			JobRequirementRequest requirement = mapper.convertValue(obj, JobRequirementRequest.class);
 			if (!SkillName.isValidKey(requirement.competencia())) {
 				throw new InvalidSkillException(requirement.competencia());
 			}
@@ -129,18 +162,22 @@ public class JobVacancyService {
 		}
 	}
 
-	private void mapLanguages(List<JobLanguageRequirementRequest> idiomas, JobVacancy jobVacancy) {
-		for (JobLanguageRequirementRequest idioma : idiomas) {
-			if (!LanguageName.isValidKey(idioma.idioma())) {
-				throw new IllegalArgumentException("Idioma inválido: " + idioma.idioma());
+	private void mapLanguages(List idiomas, JobVacancy jobVacancy) {
+		ObjectMapper mapper = new ObjectMapper();
+		if (idiomas != null) {
+			for (Object obj : idiomas) {
+				JobLanguageRequirementRequest idioma = mapper.convertValue(obj, JobLanguageRequirementRequest.class);
+				if (!LanguageName.isValidKey(idioma.idioma())) {
+					throw new IllegalArgumentException("Idioma inválido: " + idioma.idioma());
+				}
+				if (!LanguageLevel.isValidKey(idioma.nivelMin())) {
+					throw new IllegalArgumentException("Nível de idioma inválido: " + idioma.nivelMin());
+				}
+				jobVacancy.addLanguageRequirement(new JobLanguageRequirement(
+						LanguageName.fromKey(idioma.idioma()),
+						LanguageLevel.fromKey(idioma.nivelMin())
+				));
 			}
-			if (!LanguageLevel.isValidKey(idioma.nivelMin())) {
-				throw new IllegalArgumentException("Nível de idioma inválido: " + idioma.nivelMin());
-			}
-			jobVacancy.addLanguageRequirement(new JobLanguageRequirement(
-					LanguageName.fromKey(idioma.idioma()),
-					LanguageLevel.fromKey(idioma.nivelMin())
-			));
 		}
 	}
 
@@ -165,12 +202,6 @@ public class JobVacancyService {
 		return SeniorityLevel.fromKey(value);
 	}
 
-	private void validateSalaryRange(Integer minSalary, Integer maxSalary) {
-		if (minSalary != null && maxSalary != null && minSalary > maxSalary) {
-			throw new IllegalArgumentException("O salário mínimo não pode ser maior que o máximo.");
-		}
-	}
-
 	private String normalizeLocation(String value, WorkModality modality) {
 		String location = blankToNull(value);
 		if (modality == WorkModality.PRESENCIAL) {
@@ -193,7 +224,7 @@ public class JobVacancyService {
 	}
 
 	private JobDetailResponse toDetailResponse(JobVacancy jobVacancy) {
-		List<JobRequirementDetailResponse> requisitos = jobVacancy.getRequirements().stream()
+		List requisitos = jobVacancy.getRequirements().stream()
 				.map(req -> new JobRequirementDetailResponse(
 						req.getSkillName().getKey(),
 						req.getWeight(),
@@ -202,12 +233,20 @@ public class JobVacancyService {
 				))
 				.toList();
 
-		List<JobLanguageRequirementDetailResponse> idiomas = jobVacancy.getLanguageRequirements().stream()
+		List idiomas = jobVacancy.getLanguageRequirements().stream()
 				.map(req -> new JobLanguageRequirementDetailResponse(
 						req.getLanguageName().getKey(),
 						req.getMinLevel().getKey()
 				))
 				.toList();
+
+		List softSkills = jobVacancy.getSoftSkills() != null 
+				? jobVacancy.getSoftSkills().stream().map(Enum::name).toList() 
+				: List.of();
+
+		List beneficios = jobVacancy.getBeneficios() != null 
+				? jobVacancy.getBeneficios().stream().map(Enum::name).toList() 
+				: List.of();
 
 		return new JobDetailResponse(
 				jobVacancy.getId(),
@@ -218,8 +257,11 @@ public class JobVacancyService {
 				jobVacancy.getEmploymentType().getKey(),
 				jobVacancy.getLocation(),
 				jobVacancy.getSeniorityLevel().getKey(),
-				jobVacancy.getMinSalary(),
-				jobVacancy.getMaxSalary(),
+				null, // Retrocompatibilidade (salário mínimo manual)
+				null, // Retrocompatibilidade (salário máximo manual)
+				jobVacancy.getFaixaSalarial() != null ? jobVacancy.getFaixaSalarial().name() : null,
+				softSkills,
+				beneficios,
 				requisitos,
 				idiomas
 		);
