@@ -92,6 +92,9 @@ public class CandidateProfileService {
 		profile.getExperiences().clear();
 		profile.getProjects().clear();
 		profile.getLanguages().clear();
+		profile.getSoftSkills().clear();
+		profile.getBeneficios().clear();
+		
 		applyProfileData(request, profile);
 
 		AnonymousProfile saved = anonymousProfileRepository.save(profile);
@@ -138,6 +141,8 @@ public class CandidateProfileService {
 				))
 				.toList();
 
+		// (código anterior do método getMyProfile...)
+
 		return new MyProfileResponse(
 				PublicIdFormatter.toPublicCandidateId(profile.getId()),
 				competencias,
@@ -149,7 +154,11 @@ public class CandidateProfileService {
 				profile.getSalaryExpectationMin(),
 				modalidades,
 				vinculos,
-				idiomas
+				idiomas,
+				// Passamos os novos campos convertendo os Sets para Lists
+				profile.getFaixaSalarial(),
+				new java.util.ArrayList<>(profile.getSoftSkills()),
+				new java.util.ArrayList<>(profile.getBeneficios())
 		);
 	}
 
@@ -174,9 +183,13 @@ public class CandidateProfileService {
 		mapProjects(request, profile);
 		mapLanguages(request.idiomas(), profile);
 		mapAnonymizedMetadata(request, profile);
+		
 		profile.setSalaryExpectationMin(request.pretensaoSalarialMinima());
 		profile.setPreferredModalities(parseModalities(request.modalidadesPreferidas()));
 		profile.setPreferredEmploymentTypes(parseEmploymentTypes(request.vinculosPreferidos()));
+		profile.setFaixaSalarial(request.faixaSalarial());
+		profile.setSoftSkills(new LinkedHashSet<>(request.softSkills()));
+		profile.setBeneficios(new LinkedHashSet<>(request.beneficios()));
 	}
 
 	private void mapAnonymizedMetadata(ProfileCreateRequest request, AnonymousProfile profile) {
@@ -310,6 +323,8 @@ public class CandidateProfileService {
 		profile.getLanguages().size();
 		profile.getPreferredModalities().size();
 		profile.getPreferredEmploymentTypes().size();
+		profile.getSoftSkills().size();
+		profile.getBeneficios().size();
 	}
 
 	AnonymousProfile findProfileByPublicIdForInternalUse(String publicCandidateId) {
